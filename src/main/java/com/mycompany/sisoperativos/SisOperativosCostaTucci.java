@@ -6,11 +6,12 @@ package com.mycompany.sisoperativos;
 
 /**
  *
- * @author gabri
+ * @author gabri & astv06
  */
 public class SisOperativosCostaTucci {
 
     public static void main(String[] args) {
         System.out.println("Hello World!!");
     }
+    
 }
