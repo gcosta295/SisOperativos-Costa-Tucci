@@ -12,7 +12,7 @@ public class Process {
     private PCB PCB;
     private String processName;
     private int duration;
-    private String inputOutput;
+    private int inputOutput;
     private int deadLine;
 
     public String getProcessName() {
@@ -23,7 +23,7 @@ public class Process {
         return duration;
     }
 
-    public String getInputOutput() {
+    public int getInputOutput() {
         return inputOutput;
     }
 
@@ -39,7 +39,7 @@ public class Process {
         this.duration = duration;
     }
 
-    public void setInputOutput(String inputOutput) {
+    public void setInputOutput(int inputOutput) {
         this.inputOutput = inputOutput;
     }
 
@@ -51,7 +51,8 @@ public class Process {
         this.PCB=pcb;
         this.duration=0;
         this.deadLine=0;
-        this.inputOutput=null;
+        this.inputOutput=0;
         this.processName=null;
     }
+    
 }
