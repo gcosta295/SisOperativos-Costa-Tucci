@@ -63,5 +63,6 @@ public class PCB {
         this.priority= (int) ((time % 14)+1);
         this.before=null;
         this.next=null;
+        Process process = new Process(this);
     }
 }
