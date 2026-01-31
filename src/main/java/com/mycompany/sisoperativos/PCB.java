@@ -36,6 +36,10 @@ public class PCB {
         return next;
     }
 
+    public void setId(int id) {
+        this.id = id;
+    }
+
     public void setUser(String user) {
         this.user = user;
     }
@@ -58,11 +62,12 @@ public class PCB {
         
     public PCB() {
         long time = System.currentTimeMillis();
-        this.id= (int) (time % 10000000);   
+        this.id= (int) ((time % 10000000)+1);   
         this.user="Satellite";
-        this.priority= (int) ((time % 14)+1);
+        this.priority=0;
         this.before=null;
-        this.next=null;
-        Process process = new Process(this);
+        this.next=null;   
     }
+    
+    
 }
