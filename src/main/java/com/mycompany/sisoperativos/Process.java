@@ -106,7 +106,6 @@ public class Process {
     
     
     public void aperiodicProcess(PCB pcb, boolean flag){
-        pcb.setPriority(7);
         int id = (int) ((System.currentTimeMillis() % 10000000)+1);
         pcb.setId(id);
         if (flag){
@@ -132,7 +131,7 @@ public class Process {
                 pcb.setUser("Emergency");
                 if ((id % 3 == 0)&&(flag)){
                     flag = false;
-                    this.processName="Evasion Basura temporal";
+                    this.processName="Collision avoidance";
                     pcb.setPriority(7);
                 }
                 if ((id % 5 == 0)&&(flag)){
@@ -153,5 +152,8 @@ public class Process {
                 }
             }
         } 
+        /**
+ * put in queue 
+ */        
     }
 }
