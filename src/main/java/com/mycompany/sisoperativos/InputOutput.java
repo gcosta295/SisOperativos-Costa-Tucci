@@ -13,7 +13,7 @@ public class InputOutput {
     private int totalTime;
     private int counter;
     private boolean inUse;
-    private int idProceso;
+    private PCB pcbProcess;
 
     public String getName() {
         return name;
@@ -31,8 +31,8 @@ public class InputOutput {
         return inUse;
     }
 
-    public int getIdProceso() {
-        return idProceso;
+    public PCB getpcbProceso() {
+        return pcbProcess;
     }
 
     public void setName(String name) {
@@ -51,13 +51,13 @@ public class InputOutput {
         this.inUse = inUse;
     }
 
-    public void setIdProceso(int idProceso) {
-        this.idProceso = idProceso;
+    public void setPCBProceso(PCB pcbProcess) {
+        this.pcbProcess = pcbProcess;
     }
     
     public InputOutput(){
         this.counter=0;
-        this.idProceso=0;
+        this.pcbProcess=null;
         this.inUse=false;
         this.name=null;
         this.totalTime=0;
