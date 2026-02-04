@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package com.mycompany.sisoperativos;
+package com.mycompany.sisoperativos.logic;
 
 /**
  *
@@ -25,6 +25,10 @@ public class Clock implements Runnable {
 
     public int getContadorCiclos() {
         return contadorCiclos;
+    }
+
+    public int getDuracionCicloMs() {
+        return duracionCicloMs;
     }
 
     public void detener() {
