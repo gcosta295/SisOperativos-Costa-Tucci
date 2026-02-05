@@ -28,12 +28,12 @@ public class Scheduling {
     public Queue Organize(Queue oldQueue, Queue newQueue){
         if ("SRT".equals(this.politic)) { //Shortes Remaining Time
             for (int i = 0; i < oldQueue.getLen(); i++) {
-                PCB pcb= oldQueue.getFirst();           
+                PCB pcb= oldQueue.getFirstP();           
                 }
             } else {
                 
             }        for (int i = 0; i < oldQueue.getLen(); i++) {
-            PCB pcb= oldQueue.getFirst();
+            PCB pcb= oldQueue.getFirstP();
             
         }
         return null;
