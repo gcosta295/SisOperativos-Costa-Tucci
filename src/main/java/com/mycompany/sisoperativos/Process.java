@@ -12,7 +12,6 @@ public class Process {
     private PCB PCB;
     private String processName;
     private int duration;
-    private int quantum;
     private int inputOutput;
     private int deadLine;
 
@@ -22,10 +21,6 @@ public class Process {
 
     public int getDuration() {
         return duration;
-    }
-
-    public int getQuantum() {
-        return quantum;
     }
 
     public int getInputOutput() {
@@ -42,10 +37,6 @@ public class Process {
 
     public void setDuration(int duration) {
         this.duration = duration;
-    }
-
-    public void setQuantum(int quantum) {
-        this.quantum = quantum;
     }
 
     public void setInputOutput(int inputOutput) {

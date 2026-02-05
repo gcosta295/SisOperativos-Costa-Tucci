@@ -15,6 +15,13 @@ public class PCB {
     private int priority;
     private PCB before;
     private PCB next;
+    private int quantum;
+    private int deadlineR;
+    private int dorationR;
+
+    public int getId() {
+        return id;
+    }
 
     public String getUser() {
         return user;
@@ -26,6 +33,18 @@ public class PCB {
 
     public int getPriority() {
         return priority;
+    }
+
+    public int getQuantum() {
+        return quantum;
+    }
+
+    public int getDeadlineR() {
+        return deadlineR;
+    }
+
+    public int getDorationR() {
+        return dorationR;
     }
 
     public PCB getBefore() {
@@ -50,6 +69,18 @@ public class PCB {
 
     public void setPriority(int priority) {
         this.priority = priority;
+    }
+
+    public void setQuantum(int quantum) {
+        this.quantum = quantum;
+    }
+
+    public void setDeadlineR(int deadlineR) {
+        this.deadlineR = deadlineR;
+    }
+
+    public void setDorationR(int dorationR) {
+        this.dorationR = dorationR;
     }
 
     public void setBefore(PCB before) {
