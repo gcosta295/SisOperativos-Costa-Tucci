@@ -5,3 +5,4 @@ com\mycompany\sisoperativos\logic\SisOperativosCostaTucci.class
 com\mycompany\sisoperativos\gui\VentanaMain.class
 com\mycompany\sisoperativos\logic\InputOutput.class
 com\mycompany\sisoperativos\logic\Queue.class
+com\mycompany\sisoperativos\logic\Scheduling.class

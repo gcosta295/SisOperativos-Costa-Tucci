@@ -9,6 +9,7 @@ package com.mycompany.sisoperativos.logic;
  * @author astv06
  */
 public class Queue {
+
     private String name;
     private PCB firstP;
     private PCB lastP;
@@ -72,14 +73,109 @@ public class Queue {
     public void setCapacity(int capacity) {
         this.capacity = capacity;
     }
-    
-    public Queue(){
-        this.name=null;
-        this.firstP=null;
-        this.lastP=null;
-        this.firstIO=null;
-        this.lastIO=null;
-        this.len=0;
-        this.capacity=0;
+
+    public Queue() {
+        this.name = null;
+        this.firstP = null;
+        this.lastP = null;
+        this.firstIO = null;
+        this.lastIO = null;
+        this.len = 0;
+        this.capacity = 0;
+    }
+
+    public PCB dequeue() {
+        // 1. Check if the queue is empty using the class attribute
+        if (this.firstP == null) {
+            return null;
+        }
+
+        // 2. Reference the node to be removed (the current head)
+        PCB target = this.firstP;
+
+        // 3. Move the class head pointer to the next node
+        this.firstP = this.firstP.getNext();
+
+        // 4. Update the new head's 'before' pointer
+        if (this.firstP != null) {
+            // If there is a next node, it becomes the new head
+            this.firstP.setBefore(null);
+        } else {
+            // If the queue is now empty, we must also reset the lastP (Tail)
+            this.lastP = null;
+        }
+
+        // 5. Isolate the target node for safety (Clear its links)
+        target.setNext(null);
+        target.setBefore(null);
+
+        // 6. Update queue length
+        this.len--;
+
+        return target;
+    }
+
+    public void enqueueByDeadline(PCB newNode) { //Earliest Deadline First METHOD WHEN INSERTED
+        // Case 1: The queue is empty
+
+        if (firstP == null) {
+            firstP = newNode;
+            lastP = newNode;
+            newNode.setNext(null);
+            newNode.setBefore(null);
+        } // Case 2: The new process has the shortest deadline (New Head)
+        else if (newNode.getDeadlineR() < firstP.getDeadlineR()) {
+            newNode.setNext(firstP);
+            firstP.setBefore(newNode);
+            firstP = newNode;
+            newNode.setBefore(null);
+        } // Case 3: Find the correct position in the middle or at the end
+        else {
+            PCB current = firstP;
+
+            // Traverse the list until finding the correct spot
+            while (current.getNext() != null && current.getNext().getDeadlineR() <= newNode.getDeadlineR()) {
+                current = current.getNext();
+            }
+
+            // Insert newNode after 'current'
+            newNode.setNext(current.getNext());
+            newNode.setBefore(current);
+
+            if (current.getNext() != null) {
+                // Link the following node back to the new node
+                current.getNext().setBefore(newNode);
+            } else {
+                // If inserted at the end, update the Tail pointer
+                lastP = newNode;
+            }
+            current.setNext(newNode);
+        }
+        len = +1; // Increment queue size
+    }
+
+    public void enqueueFIFO(PCB newNode) {
+        // 1. Safety check: ensure the new node doesn't carry old links
+        newNode.setNext(null);
+        newNode.setBefore(null);
+
+        // 2. Case 1: The queue is empty
+        if (this.firstP == null) {
+            this.firstP = newNode;
+            this.lastP = newNode;
+        } // 3. Case 2: The queue already has elements
+        else {
+            // Link the current tail to the new node
+            this.lastP.setNext(newNode);
+
+            // Link the new node back to the current tail
+            newNode.setBefore(this.lastP);
+
+            // Move the tail pointer to the new node
+            this.lastP = newNode;
+        }
+
+        // 4. Update queue size
+        this.len++;
     }
 }

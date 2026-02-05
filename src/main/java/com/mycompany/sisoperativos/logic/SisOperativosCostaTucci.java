@@ -10,20 +10,52 @@ package com.mycompany.sisoperativos.logic;
  */
 public class SisOperativosCostaTucci {
 
-   public static void main(String[] args) throws InterruptedException { //Pruebas de reloj
-        // 1. Iniciamos el reloj con ciclos de 1 segundo (1000ms)
-        Clock miReloj = new Clock(1000);
-        Thread hiloReloj = new Thread(miReloj);
-        hiloReloj.start();
+public static void main(String[] args) {
+        // 1. Create the Queues
+        Queue oldQueue = new Queue();
+        Queue newQueue = new Queue();
+        
+        System.out.println("--- Step 1: Creating Processes ---");
+        
+        // 2. Create sample PCBs with different deadlines
+        // (Remember to add a constructor or setters for these values)
+        PCB p1 = new PCB();
+        p1.setDeadlineR(50);
+        p1.setUser("Process_A");
 
-        // 2. Simulamos que después de 5 segundos, el usuario acelera el reloj
-        Thread.sleep(5000); //Esto hace que no corra mas del codigo hasta que pasen los 5000 
-        System.out.println(">>> Acelerando simulación a ciclos de 100ms...");
-        miReloj.setDuracionCiclo(100); // Ahora el contador subirá mucho más rápido
+        PCB p2 = new PCB();
+        p2.setDeadlineR(10); // This should be first (Earliest)
+        p2.setUser("Process_B");
 
-        // 3. Dejamos que corra un poco más y lo detenemos
-        Thread.sleep(2000);
-        miReloj.detener();
+        PCB p3 = new PCB();
+        p3.setDeadlineR(30);
+        p3.setUser("Process_C");
+
+        // 3. Add them to the oldQueue (Unsorted)
+        oldQueue.enqueueFIFO(p1); // Use a standard enqueue here
+        oldQueue.enqueueFIFO(p2);
+        oldQueue.enqueueFIFO(p3);
+        
+        System.out.println("Processes added to Old Queue.");
+
+        // 4. Test the 'organizar' logic (EDF)
+        System.out.println("\n--- Step 2: Organizing by Deadline (EDF) ---");
+        
+        // Simulate the organizing loop
+        PCB aux = oldQueue.dequeue();
+        while (aux != null) {
+            System.out.println("Moving: " + aux.getUser() + " with Deadline: " + aux.getDeadlineR());
+            newQueue.enqueueByDeadline(aux); // Your sorted method
+            aux = oldQueue.dequeue();
+        }
+
+        // 5. Verify the results
+        System.out.println("\n--- Step 3: Verifying Results (New Queue) ---");
+        PCB current = newQueue.dequeue();
+        while (current != null) {
+            System.out.println("Processing: " + current.getUser() + " | Deadline: " + current.getDeadlineR());
+            current = newQueue.dequeue();
+        }
     }
     
 }
