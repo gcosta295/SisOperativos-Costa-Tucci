@@ -25,17 +25,15 @@ public class Scheduling {
         this.newQueue=new Queue();
     }    
     
-    public Queue Organize(){
-        if ("SRT".equals(this.politic)) { //Shortest Remaining Time
-                PCB aux = oldQueue.dequeue(); 
-                while (aux != null) {
-                    newQueue.enqueueByDeadline(aux);
-                    aux = oldQueue.dequeue();
+    public Queue Organize(Queue oldQueue, Queue newQueue){
+        if ("SRT".equals(this.politic)) { //Shortes Remaining Time
+            for (int i = 0; i < oldQueue.getLen(); i++) {
+                PCB pcb= oldQueue.getFirstP();           
                 }
             } else {
                 
-            }       // for (int i = 0; i < oldQueue.getLen(); i++) {
-       //     PCB pcb= oldQueue.getFirstP();
+            }        for (int i = 0; i < oldQueue.getLen(); i++) {
+            PCB pcb= oldQueue.getFirstP();
             
        // }
         return null;
