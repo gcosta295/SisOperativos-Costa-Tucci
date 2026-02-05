@@ -17,7 +17,7 @@ public class PCB {
     private PCB next;
     private int quantum;
     private int deadlineR;
-    private int dorationR;
+    private int durationR;
 
     public int getId() {
         return id;
@@ -43,8 +43,8 @@ public class PCB {
         return deadlineR;
     }
 
-    public int getDorationR() {
-        return dorationR;
+    public int getDurationR() {
+        return durationR;
     }
 
     public PCB getBefore() {
@@ -79,8 +79,8 @@ public class PCB {
         this.deadlineR = deadlineR;
     }
 
-    public void setDorationR(int dorationR) {
-        this.dorationR = dorationR;
+    public void setDurationR(int durationR) {
+        this.durationR = durationR;
     }
 
     public void setBefore(PCB before) {
