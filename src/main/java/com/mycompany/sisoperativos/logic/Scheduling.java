@@ -23,7 +23,7 @@ public class Scheduling {
         this.oldQueue=oldQueue;
         this.politic=politic;
         this.newQueue=new Queue();
-    }
+    }    
     
     public Queue Organize(Queue oldQueue, Queue newQueue){
         if ("SRT".equals(this.politic)) { //Shortes Remaining Time
@@ -35,7 +35,7 @@ public class Scheduling {
             }        for (int i = 0; i < oldQueue.getLen(); i++) {
             PCB pcb= oldQueue.getFirstP();
             
-        }
+       // }
         return null;
 
     }
