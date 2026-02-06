@@ -10,12 +10,15 @@ package com.mycompany.sisoperativos.logic;
  */
 public class Clock implements Runnable {
 //Se agrega el "Runnable" a la clase del reloj para que sea capaz de poder correr en un hilo nuevo
+
     private int contadorCiclos = 0; //Siempre el reloj arranca en 0
     private int duracionCicloMs; // Tiempo en milisegundos que dura cada ciclo
     private boolean encendido = true;
+    private final Scheduling scheduler;
 
-    public Clock(int duracionInicial) {
+    public Clock(int duracionInicial, Scheduling scheduler) {
         this.duracionCicloMs = duracionInicial;
+        this.scheduler = scheduler;
     }
 
     // Método para cambiar la velocidad del reloj en tiempo real
@@ -35,21 +38,34 @@ public class Clock implements Runnable {
         this.encendido = false;
     }
 
+    public void setContadorCiclos(int contadorCiclos) {
+        this.contadorCiclos = contadorCiclos;
+    }
+
+    public void setDuracionCicloMs(int duracionCicloMs) {
+        this.duracionCicloMs = duracionCicloMs;
+    }
+
+    public void setEncendido(boolean encendido) {
+        this.encendido = encendido;
+    }
+    
     @Override
     public void run() {
         try {
             while (encendido) {
-                // Lógica del ciclo
                 contadorCiclos++;
-                System.out.println("[RELOJ] Ciclo actual: " + contadorCiclos);
-                
-                // Aquí podrías avisar a tu Planificador que un ciclo pasó
-                
-                // Pausa según la duración configurada
+                System.out.println("[CLOCK] Cycle: " + contadorCiclos);
+
+                // IMPORTANT: Tell the scheduler to process one cycle
+                if (scheduler != null) {
+                    scheduler.runExecutionCycle();
+                }
+
                 Thread.sleep(duracionCicloMs);
             }
         } catch (InterruptedException e) {
-            System.out.println("Reloj de simulación interrumpido.");
+            System.out.println("Simulation clock interrupted.");
         }
     }
-    }
+}

@@ -85,33 +85,24 @@ public class Queue {
     }
 
     public PCB dequeue() {
-        // 1. Check if the queue is empty using the class attribute
         if (this.firstP == null) {
             return null;
         }
 
-        // 2. Reference the node to be removed (the current head)
-        PCB target = this.firstP;
+        PCB target = this.firstP; // El que va a salir
+        this.firstP = this.firstP.getNext(); // El segundo pasa a ser primero
 
-        // 3. Move the class head pointer to the next node
-        this.firstP = this.firstP.getNext();
-
-        // 4. Update the new head's 'before' pointer
         if (this.firstP != null) {
-            // If there is a next node, it becomes the new head
-            this.firstP.setBefore(null);
+            this.firstP.setBefore(null); // El nuevo primero no tiene a nadie antes
         } else {
-            // If the queue is now empty, we must also reset the lastP (Tail)
-            this.lastP = null;
+            this.lastP = null; // Si no hay nadie más, la cola está vacía
         }
 
-        // 5. Isolate the target node for safety (Clear its links)
+        // LIMPIEZA CRÍTICA: Desconectar el proceso extraído de la cadena
         target.setNext(null);
         target.setBefore(null);
 
-        // 6. Update queue length
         this.len--;
-
         return target;
     }
 
@@ -255,33 +246,4 @@ public class Queue {
         len = +1; // Increment queue size
     }
 
-    public void executeRoundRobin(Queue readyQueue, int systemQuantum) {
-        // 1. Get the first process in line
-        PCB currentP = readyQueue.dequeue();
-
-        if (currentP != null) {
-            // Set the process state to Running
-            currentP.setState("Running");
-
-            // We calculate how much time to run: the minimum between the system quantum and what the process needs
-            int timeToExecute = Math.min(systemQuantum, currentP.getDurationR());
-
-            System.out.println("Executing Process ID: " + currentP.getId() + " for " + timeToExecute + " cycles.");
-
-            // 2. Subtract the execution time from the remaining duration
-            currentP.setDurationR(currentP.getDurationR() - timeToExecute);
-
-            // 3. Check if the process finished or needs to go back to the queue
-            if (currentP.getDurationR() > 0) {
-                // Quantum expired but process is not finished
-                currentP.setState("Ready");
-                System.out.println("Quantum expired. Moving Process " + currentP.getId() + " to the back of the queue.");
-                readyQueue.enqueueFIFO(currentP); // Goes to the back of the line
-            } else {
-                // Process finished its work
-                currentP.setState("Terminated");
-                System.out.println("Process " + currentP.getId() + " has finished execution.");
-            }
-        }
-    }
 }
