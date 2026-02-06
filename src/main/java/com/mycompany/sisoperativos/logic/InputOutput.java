@@ -11,6 +11,7 @@ package com.mycompany.sisoperativos.logic;
 public class InputOutput {
     private String name;
     private int totalTime;
+    private int timer;
     private int counter;
     private boolean inUse;
     private PCB pcbProcess;
@@ -23,6 +24,10 @@ public class InputOutput {
         return totalTime;
     }
 
+    public int getTimer() {
+        return timer;
+    }
+
     public int getCounter() {
         return counter;
     }
@@ -31,7 +36,7 @@ public class InputOutput {
         return inUse;
     }
 
-    public PCB getpcbProceso() {
+    public PCB getPcbProcess() {
         return pcbProcess;
     }
 
@@ -51,15 +56,65 @@ public class InputOutput {
         this.inUse = inUse;
     }
 
-    public void setPCBProceso(PCB pcbProcess) {
+    public void setTimer(int timer) {
+        this.timer = timer;
+    }
+
+    public void setPcbProcess(PCB pcbProcess) {
         this.pcbProcess = pcbProcess;
     }
-    
+
     public InputOutput(){
         this.counter=0;
         this.pcbProcess=null;
         this.inUse=false;
         this.name=null;
         this.totalTime=0;
+        this.timer=0;
     }
+    
+    public void initializationIO(int index){
+        if(index==0){
+            this.counter=2;
+            this.name="Receptor";
+            this.totalTime=5;
+            this.timer=7;
+        }
+        if(index==1){
+            this.counter=4;
+            this.name="GNSS";
+            this.totalTime=4;
+            this.timer=8    ;
+        }
+        if(index==2){
+            this.counter=6;
+            this.name="Thermometer";
+            this.totalTime=2;
+            this.timer=8;
+        }
+        if(index==3){
+            this.counter=8;
+            this.name="SD Memory";
+            this.totalTime=6;
+            this.timer=14;
+        }
+        if(index==4){
+            this.counter=1;
+            this.name="Sensor";
+            this.totalTime=8;
+            this.timer=9;
+        }
+        if(index==5){
+            this.counter=6;
+            this.name="Sysadmin";
+            this.totalTime=6;
+            this.timer=12;
+        }
+        if(index==6){
+            this.counter=6;
+            this.name="Radiation Detector";
+            this.totalTime=10;
+            this.timer=16;
+        }
+    } 
 }
