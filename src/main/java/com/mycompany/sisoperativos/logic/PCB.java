@@ -18,6 +18,7 @@ public class PCB {
     private int quantum;
     private int deadlineR;
     private int durationR;
+    private int size;
 
     public int getId() {
         return id;
@@ -55,6 +56,10 @@ public class PCB {
         return next;
     }
 
+    public int getSize() {
+        return size;
+    }
+
     public void setId(int id) {
         this.id = id;
     }
@@ -90,6 +95,10 @@ public class PCB {
     public void setNext(PCB next) {
         this.next = next;
     }
+
+    public void setSize(int size) {
+        this.size = size;
+    }
         
     public PCB() {
         long time = System.currentTimeMillis();
@@ -100,6 +109,8 @@ public class PCB {
         this.next=null;
         this.quantum=0;
         this.deadlineR=0;
+        this.durationR=0;
+        this.size=0;
     }
     
     
