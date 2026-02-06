@@ -1,7 +1,6 @@
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  */
-
 package com.mycompany.sisoperativos.logic;
 
 /**
@@ -10,52 +9,51 @@ package com.mycompany.sisoperativos.logic;
  */
 public class SisOperativosCostaTucci {
 
-public static void main(String[] args) {
-        // 1. Create the Queues
-        Queue oldQueue = new Queue();
-        Queue newQueue = new Queue();
-        
-        System.out.println("--- Step 1: Creating Processes ---");
-        
-        // 2. Create sample PCBs with different deadlines
-        // (Remember to add a constructor or setters for these values)
+    public static void main(String[] args) {
+        // 1. Setup the Scheduler and Queues
+        Scheduling scheduler = new Scheduling();
+        Queue readyQueue = new Queue();
+
+        // Let's assume the scheduler has a method to set its queue
+        scheduler.createScheduling(readyQueue, "RR");
+
+        // 2. Create sample processes (PCBs)
+        // Process A: Needs 6 cycles
         PCB p1 = new PCB();
-        p1.setPriority(4);
-        p1.setUser("Process_A");
+        p1.setId(101);
+        p1.setDurationR(5);
+        readyQueue.enqueueFIFO(p1);
 
+// PROCESO 2 (DEBE TENER SU PROPIO 'new')
         PCB p2 = new PCB();
-        p2.setPriority(2); // This should be first (Earliest)
-        p2.setUser("Process_B");
+        p2.setId(202);
+        p2.setDurationR(2);
+        readyQueue.enqueueFIFO(p2);
 
-        PCB p3 = new PCB();
-        p3.setPriority(1);
-        p3.setUser("Process_C");
+        // 3. Add processes to the queue
+        readyQueue.enqueueFIFO(p1);
+        readyQueue.enqueueFIFO(p2);
 
-        // 3. Add them to the oldQueue (Unsorted)
-        oldQueue.enqueueFIFO(p1); // Use a standard enqueue here
-        oldQueue.enqueueFIFO(p2);
-        oldQueue.enqueueFIFO(p3);
-        
-        System.out.println("Processes added to Old Queue.");
+        System.out.println("--- Starting Round Robin Simulation ---");
+        System.out.println("Quantum is set to 4 cycles.");
 
-        // 4. Test the 'organizar' logic (EDF)
-        System.out.println("\n--- Step 2: Organizing by Deadline (EDF) ---");
-        
-        // Simulate the organizing loop
-        PCB aux = oldQueue.dequeue();
-        while (aux != null) {
-            System.out.println("Moving: " + aux.getUser() + " with Deadline: " + aux.getPriority());
-            newQueue.enqueueByRemainingTime(aux); // Your sorted method
-            aux = oldQueue.dequeue();
-        }
+        // 4. Initialize the Clock
+        // We pass the scheduler so the clock can trigger 'runExecutionCycle()'
+        // 1000ms = 1 second per cycle for easy reading in console
+        Clock simClock = new Clock(1000, scheduler);
 
-        // 5. Verify the results
-        System.out.println("\n--- Step 3: Verifying Results (New Queue) ---");
-        PCB current = newQueue.dequeue();
-        while (current != null) {
-            System.out.println("Processing: " + current.getUser() + " | Deadline: " + current.getPriority());
-            current = newQueue.dequeue();
+        // 5. Start the Clock thread
+        Thread clockThread = new Thread(simClock);
+        clockThread.start();
+
+        // Optional: Let it run for 15 seconds then stop
+        try {
+            Thread.sleep(15000);
+            simClock.detener();
+            System.out.println("--- Simulation Ended ---");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
-    
+
 }

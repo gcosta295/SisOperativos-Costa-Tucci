@@ -3,28 +3,32 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 package com.mycompany.sisoperativos.gui;
-import com.mycompany.sisoperativos.logic.Clock; 
+
+import com.mycompany.sisoperativos.logic.Clock;
+import com.mycompany.sisoperativos.logic.Scheduling;
 import javax.swing.JLabel;
 import javax.swing.Timer;
+
 /**
  *
  * @author gabri
  */
 public class VentanaMain extends javax.swing.JFrame {
-    
+
 // 1. Declaramos la variable del reloj y el Label manualmente
-    private Clock reloj; 
-    private JLabel lblReloj; 
-    private JLabel lblCiclos; 
+    private Clock reloj;
+    private JLabel lblReloj;
+    private JLabel lblCiclos;
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(VentanaMain.class.getName());
+
     /**
      * Creates new form VentanaMain
      */
-  
+
     public VentanaMain(Clock reloj) {
         this.reloj = reloj;
         initComponents();
-        
+
         // 2. Creamos y agregamos un Label simple para ver el reloj
         lblReloj = new JLabel("Ciclo actual: 0");
         lblReloj.setBounds(20, 20, 200, 30); // Posición básica
@@ -32,7 +36,7 @@ public class VentanaMain extends javax.swing.JFrame {
         lblCiclos.setBounds(50, 50, 200, 30); // Posición básica
         this.add(lblReloj);
         this.add(lblCiclos);
-        
+
         // 3. Iniciamos el refresco visuals
         iniciarTimer();
     }
@@ -48,6 +52,7 @@ public class VentanaMain extends javax.swing.JFrame {
         });
         timer.start();
     }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -76,7 +81,8 @@ public class VentanaMain extends javax.swing.JFrame {
     /**
      * @param args the command line arguments
      */
-   public static void main(String args[]) {
+    public static void main(String args[]) {
+
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -89,12 +95,13 @@ public class VentanaMain extends javax.swing.JFrame {
         }
         java.awt.EventQueue.invokeLater(() -> {
             // Creamos el reloj aquí
-            Clock miReloj = new Clock(1000); 
-            
+            Scheduling scheduler = new Scheduling();
+            Clock miReloj = new Clock(1000, scheduler);
+
             // Iniciamos su hilo
             Thread hiloReloj = new Thread(miReloj);
             hiloReloj.start();
-            
+
             // Se lo pasamos a la ventana
             new VentanaMain(miReloj).setVisible(true);
         });
@@ -102,5 +109,4 @@ public class VentanaMain extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
-
 }

@@ -13,17 +13,28 @@ public class Scheduling {
     private Queue oldQueue;
     private Queue newQueue;
     private String politic;
+    private int System_Quantum;
+    private PCB currentProcess;
+
+    public void setSystem_Quantum(int System_Quantum) {
+        this.System_Quantum = System_Quantum;
+    }
+
+    public int getSystem_Quantum() {
+        return System_Quantum;
+    }
 
     public Scheduling() {
         this.newQueue = null;
         this.oldQueue = null;
         this.politic = null;
+        this.currentProcess = null;
+        this.System_Quantum = 10;
     }
 
     public void createScheduling(Queue oldQueue, String politic) {
         this.oldQueue = oldQueue;
         this.politic = politic;
-        this.newQueue = new Queue();
     }
 
     public Queue Organize(Queue oldQueue, Queue newQueue) {
@@ -56,37 +67,75 @@ public class Scheduling {
                 aux = oldQueue.dequeue();
             }
         }
-
         return newQueue;
     }
-    
-    public void executeRoundRobin(Queue readyQueue, int systemQuantum) {
-        // 1. Get the first process in line
-        PCB currentP = readyQueue.dequeue();
 
-        if (currentP != null) {
-            // Set the process state to Running
-            currentP.setState("Running");
+    public void runExecutionCycleRR() { //Execution Cycle for when Round Robin is activated
+        // 1. Cargar proceso si el CPU está vacío
+        // 1. Intentar obtener un proceso si el CPU está libre
+        if (currentProcess == null) {
+            PCB nextP = oldQueue.dequeue();
 
-            // We calculate how much time to run: the minimum between the system quantum and what the process needs
-            int timeToExecute = Math.min(systemQuantum, currentP.getDurationR());
-
-            System.out.println("Executing Process ID: " + currentP.getId() + " for " + timeToExecute + " cycles.");
-
-            // 2. Subtract the execution time from the remaining duration
-            currentP.setDurationR(currentP.getDurationR() - timeToExecute);
-
-            // 3. Check if the process finished or needs to go back to the queue
-            if (currentP.getDurationR() > 0) {
-                // Quantum expired but process is not finished
-                currentP.setState("Ready");
-                System.out.println("Quantum expired. Moving Process " + currentP.getId() + " to the back of the queue.");
-                readyQueue.enqueueFIFO(currentP); // Goes to the back of the line
-            } else {
-                // Process finished its work
-                currentP.setState("Terminated");
-                System.out.println("Process " + currentP.getId() + " has finished execution.");
+            // FILTRO: Mientras lo que saquemos de la cola ya esté terminado, lo ignoramos
+            while (nextP != null && nextP.getDurationR() <= 0) {
+                System.out.println("[DEBUG] Saltando proceso terminado: " + nextP.getId());
+                nextP = oldQueue.dequeue();
             }
+
+            currentProcess = nextP;
+
+            if (currentProcess != null) {
+                currentProcess.setQuantum(0);
+            }
+        }// 1. Si no hay proceso, sacamos uno nuevo
+        if (currentProcess == null) {
+            currentProcess = oldQueue.dequeue();
+
+            // FILTRO ANTI-ZOMBIE: 
+            // Si el proceso que sacamos ya tiene duración 0, saltamos al siguiente
+            while (currentProcess != null && currentProcess.getDurationR() <= 0) {
+                System.out.println("[DEBUG] Ignorando proceso terminado: " + currentProcess.getId());
+                currentProcess = oldQueue.dequeue();
+            }
+
+            if (currentProcess != null) {
+                currentProcess.setQuantum(0);
+            }
+        }
+
+        if (currentProcess != null) {
+            // ... (el resto de tu lógica de ejecución)
+        } else {
+            System.out.println("CPU Idle...");
+        }
+
+        if (currentProcess != null) {
+            // 2. Ejecutar un paso
+            currentProcess.setDurationR(currentProcess.getDurationR() - 1);
+            int currentSpentTime = currentProcess.getQuantum() + 1;
+            currentProcess.setQuantum(currentSpentTime);
+            currentProcess.setState("Running");
+
+            System.out.println("Executing ID: " + currentProcess.getId()
+                    + " | Cycles in this turn: " + currentSpentTime
+                    + " | Remaining Duration: " + currentProcess.getDurationR());
+
+            // 3. ¿Terminó? (Prioridad máxima)
+            if (currentProcess.getDurationR() <= 0) {
+                currentProcess.setState("Terminated");
+                System.out.println("Process " + currentProcess.getId() + " FINISHED.");
+                currentProcess = null;
+            } // 4. ¿Se acabó su tiempo (Quantum)?
+            else if (currentSpentTime >= 4) { // He puesto '4' directo para probar
+                System.out.println("!!! QUANTUM REACHED !!! Sending ID " + currentProcess.getId() + " to back.");
+                currentProcess.setState("Ready");
+                currentProcess.setQuantum(0);
+
+                oldQueue.enqueueFIFO(currentProcess); // Usamos tu método FIFO
+                currentProcess = null; // Vaciamos el CPU
+            }
+        } else {
+            System.out.println("CPU Idle...");
         }
     }
 

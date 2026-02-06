@@ -97,7 +97,9 @@ public class PCB {
         this.user="Satellite";
         this.priority=0;
         this.before=null;
-        this.next=null;   
+        this.next=null;
+        this.quantum=0;
+        this.deadlineR=0;
     }
     
     
