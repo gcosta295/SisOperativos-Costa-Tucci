@@ -59,7 +59,7 @@ public class Clock implements Runnable {
 
                 // IMPORTANT: Tell the scheduler to process one cycle
                 if (scheduler != null) {
-                    scheduler.runExecutionCycle();
+                    scheduler.runExecutionCycleRR();
                 }
 
                 Thread.sleep(duracionCicloMs);
