@@ -246,4 +246,23 @@ public class Queue {
         len = +1; // Increment queue size
     }
 
+    public void decrementAllDeadlines() {
+        PCB aux = this.firstP;
+        while (aux != null) {
+            aux.setDeadlineR(aux.getDeadlineR() - 1);
+            if (aux.getDeadlineR() == 0) {
+                // Opcional: imprimir que un proceso en espera está por fallar
+            }
+            aux = aux.getNext();
+        }
+    }
+
+    public PCB peek() {
+        // Si la cola está vacía, devuelve null
+        if (this.firstP == null) {
+            return null;
+        }
+        // Retorna el objeto PCB que está en la cabeza de la lista
+        return this.firstP;
+    }
 }

@@ -10,8 +10,7 @@ package com.mycompany.sisoperativos.logic;
  */
 public class Scheduling {
 
-    private Queue oldQueue;
-    private Queue newQueue;
+    private Queue queue;
     private String politic;
     private int System_Quantum;
     private PCB currentProcess;
@@ -25,142 +24,134 @@ public class Scheduling {
     }
 
     public Scheduling() {
-        this.newQueue = null;
-        this.oldQueue = null;
+        this.queue = new Queue();
         this.politic = null;
         this.currentProcess = null;
         this.System_Quantum = 10;
     }
 
     public void createScheduling(Queue oldQueue, String politic) {
-        this.oldQueue = oldQueue;
+        this.queue = oldQueue;
         this.politic = politic;
     }
 
-    public Queue Organize(Queue oldQueue, Queue newQueue) {
-        // 1. Get the first element to start the loop
-        PCB aux = oldQueue.dequeue();
-
-        if ("EDF".equals(this.politic)) { // Shortest Remaining Time / Deadline
-            // 2. Loop until there are no more processes in the source queue
-            while (aux != null) {
-                // 3. Insert into the new queue using your sorted method
-                newQueue.enqueueByDeadline(aux);
-
-                // 4. Get the next process from the source
-                aux = oldQueue.dequeue();
-            }
-        } else if ("FCFS".equals(this.politic)) {
-            // Example of how to add another policy
-            while (aux != null) {
-                newQueue.enqueueFIFO(aux);
-                aux = oldQueue.dequeue();
-            }
-        } else if ("SRT".equals(this.politic)) {
-            while (aux != null) {
-                newQueue.enqueueByRemainingTime(aux);
-                aux = oldQueue.dequeue();
-            }
-        } else if ("Priority".equals(this.politic)) {
-            while (aux != null) {
-                newQueue.enqueueByPriority(aux);
-                aux = oldQueue.dequeue();
-            }
+    public void Organize() {
+        if (this.queue.getLen() == 0 && this.currentProcess == null) {
+            return;
         }
-        return newQueue;
+        Queue newQueue = new Queue();
+        PCB aux = queue.dequeue();
+        while (aux != null) {
+            if ("EDF".equals(this.politic)) {
+                newQueue.enqueueByDeadline(aux);
+            } else if ("SRT".equals(this.politic)) {
+                newQueue.enqueueByRemainingTime(aux);
+            } else if ("Priority".equals(this.politic)) {
+                newQueue.enqueueByPriority(aux);
+            } else {
+                // Para RR y FCFS usamos FIFO simple
+                newQueue.enqueueFIFO(aux);
+            }
+            aux = queue.dequeue();
+        }
+        // IMPORTANTE: Reemplazar la cola vieja con la nueva ya ordenada
+        this.queue = newQueue;
     }
 
-    public void runExecutionCycleRR() { //Execution Cycle for when Round Robin is activated
+    public void runExecutionCycle() {
         // 1. Cargar proceso si el CPU está vacío
-        // 1. Intentar obtener un proceso si el CPU está libre
+        // 1. Reducir Deadline de los que están en la cola (El tiempo no perdona)
+        PCB temp = queue.peek();
+        // Suponiendo que tienes un método para recorrer la cola o 
+        // puedes restar el tiempo a todos los procesos en espera.
+        updateQueueDeadlines();
         if (currentProcess == null) {
-            PCB nextP = oldQueue.dequeue();
-
-            // FILTRO: Mientras lo que saquemos de la cola ya esté terminado, lo ignoramos
-            while (nextP != null && nextP.getDurationR() <= 0) {
-                System.out.println("[DEBUG] Saltando proceso terminado: " + nextP.getId());
-                nextP = oldQueue.dequeue();
-            }
-
-            currentProcess = nextP;
-
-            if (currentProcess != null) {
-                currentProcess.setQuantum(0);
-            }
-        }// 1. Si no hay proceso, sacamos uno nuevo
-        if (currentProcess == null) {
-            currentProcess = oldQueue.dequeue();
-
-            // FILTRO ANTI-ZOMBIE: 
-            // Si el proceso que sacamos ya tiene duración 0, saltamos al siguiente
-            while (currentProcess != null && currentProcess.getDurationR() <= 0) {
-                System.out.println("[DEBUG] Ignorando proceso terminado: " + currentProcess.getId());
-                currentProcess = oldQueue.dequeue();
-            }
-
+            currentProcess = queue.dequeue();
             if (currentProcess != null) {
                 currentProcess.setQuantum(0);
             }
         }
 
         if (currentProcess != null) {
-            // ... (el resto de tu lógica de ejecución)
-        } else {
-            System.out.println("CPU Idle...");
-        }
-
-        if (currentProcess != null) {
-            // 2. Ejecutar un paso
+            // Ejecución estándar
             currentProcess.setDurationR(currentProcess.getDurationR() - 1);
-            int currentSpentTime = currentProcess.getQuantum() + 1;
-            currentProcess.setQuantum(currentSpentTime);
-            currentProcess.setState("Running");
+            currentProcess.setQuantum(currentProcess.getQuantum() + 1);
+            currentProcess.setDeadlineR(currentProcess.getDeadlineR() - 1);
 
-            System.out.println("Executing ID: " + currentProcess.getId()
-                    + " | Cycles in this turn: " + currentSpentTime
-                    + " | Remaining Duration: " + currentProcess.getDurationR());
+            System.out.println("Executing ID: " + currentProcess.getId() + " [Rem: " + currentProcess.getDurationR() + "]" + " [Deadline: " + currentProcess.getDeadlineR() + "]");
 
-            // 3. ¿Terminó? (Prioridad máxima)
+            // 2. ¿Terminó?
             if (currentProcess.getDurationR() <= 0) {
-                currentProcess.setState("Terminated");
                 System.out.println("Process " + currentProcess.getId() + " FINISHED.");
                 currentProcess = null;
-            } // 4. ¿Se acabó su tiempo (Quantum)?
-            else if (currentSpentTime >= 4) { // He puesto '4' directo para probar
-                System.out.println("!!! QUANTUM REACHED !!! Sending ID " + currentProcess.getId() + " to back.");
-                currentProcess.setState("Ready");
-                currentProcess.setQuantum(0);
-
-                oldQueue.enqueueFIFO(currentProcess); // Usamos tu método FIFO
-                currentProcess = null; // Vaciamos el CPU
+                return; // Salimos para que el siguiente entre en el próximo ciclo
             }
-        } else {
-            System.out.println("CPU Idle...");
+            if (currentProcess.getDeadlineR() < 0) {
+                System.out.println("!!! ALERTA: ID " + currentProcess.getId() + " ha superado su DEADLINE (Misión Crítica en riesgo) !!!");
+            }
+
+            // 3. LÓGICA DE PREEMPCIÓN (REALISMO ESTRICTO)
+            PCB nextInQueue = queue.getFirstP(); // Solo miramos el primero sin sacarlo
+
+            if (nextInQueue != null) {
+                boolean expulsar = false;
+
+                if ("RR".equals(this.politic) && currentProcess.getQuantum() >= 4) {
+                    System.out.println("!!! QUANTUM EXPIRED !!!");
+                    expulsar = true;
+                } else if ("SRT".equals(this.politic) && nextInQueue.getDurationR() < currentProcess.getDurationR()) {
+                    System.out.println("!!! PREEMPTION (SRT) !!! ID " + nextInQueue.getId() + " es más corto.");
+                    expulsar = true;
+                } else if ("EDF".equals(this.politic) && nextInQueue.getDeadlineR() < currentProcess.getDeadlineR()) {
+                    System.out.println("!!! PREEMPTION (EDF) !!! ID " + nextInQueue.getId() + " es más urgente.");
+                    expulsar = true;
+                } else if ("Priority".equals(this.politic) && nextInQueue.getPriority() > currentProcess.getPriority()) {
+                    System.out.println("!!! PREEMPTION (PRIORITY) !!! ID " + nextInQueue.getId() + " tiene más prioridad.");
+                    expulsar = true;
+                } else if ("Priority".equals(this.politic)) {
+                    // Si el que espera (nextInQueue) tiene un número de prioridad MÁS ALTO 
+                    // que el que está corriendo, lo expulsamos.
+                    if (nextInQueue.getPriority() > currentProcess.getPriority()) {
+                        System.out.println("!!! PREEMPCIÓN POR PRIORIDAD !!!");
+                        System.out.println("ID " + nextInQueue.getId() + " (Prio: " + nextInQueue.getPriority()
+                                + ") expulsa a ID " + currentProcess.getId() + " (Prio: " + currentProcess.getPriority() + ")");
+
+                        expulsar = true;
+                    }
+                }
+
+                if (expulsar) {
+                    currentProcess.setQuantum(0);
+                    queue.enqueueFIFO(currentProcess); // El actual vuelve a la cola
+                    currentProcess = null; // El CPU queda libre para el "retador" en el ciclo siguiente
+                }
+            }
         }
     }
 
-    public Queue getOldQueue() {
-        return oldQueue;
-    }
-
-    public Queue getNewQueue() {
-        return newQueue;
+    public Queue getQueue() {
+        return this.queue;
     }
 
     public String getPolitic() {
-        return politic;
+        return this.politic;
     }
 
-    public void setOldQueue(Queue oldQueue) {
-        this.oldQueue = oldQueue;
+    public void setQueue(Queue queue) {
+        this.queue = queue;
     }
 
-    public void setNewQueue(Queue newQueue) {
-        this.newQueue = newQueue;
+    public void setPolitic(String nueva) {
+        this.politic = nueva;
+        this.Organize();
+        // No hace falta expulsar aquí manualmente, 
+        // porque el runExecutionCycle lo hará solo en el siguiente ciclo 
+        // al comparar los procesos con la nueva regla.
     }
 
-    public void setPolitic(String politic) {
-        this.politic = politic;
+    private void updateQueueDeadlines() {
+        // Necesitas un método en tu clase Queue que permita 
+        // restar 1 al DeadlineR de todos los PCB sin sacarlos de la fila.
+        queue.decrementAllDeadlines();
     }
-
 }
