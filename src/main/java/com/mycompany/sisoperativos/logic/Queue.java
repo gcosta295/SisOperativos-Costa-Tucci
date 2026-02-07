@@ -265,4 +265,14 @@ public class Queue {
         // Retorna el objeto PCB que está en la cabeza de la lista
         return this.firstP;
     }
+    
+    public void enqueueIO(InputOutput io){
+        if (this.firstIO==null){
+            this.firstIO=io;
+            this.lastIO=io;
+        }else{
+            this.lastIO.setNext(io);
+            this.lastIO=io;
+        }
+    }
 }
