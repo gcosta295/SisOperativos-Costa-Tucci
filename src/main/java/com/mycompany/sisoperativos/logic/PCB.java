@@ -99,11 +99,9 @@ public class PCB {
     public void setSize(int size) {
         this.size = size;
     }
-    
-    
-        
+         
     public PCB() {
-        long time = System.currentTimeMillis();
+        long time = System.nanoTime();
         this.id= (int) ((time % 10000000)+1);   
         this.user="Satellite";
         this.priority=0;

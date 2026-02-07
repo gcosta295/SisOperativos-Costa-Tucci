@@ -15,6 +15,10 @@ public class Process {
     private String inputOutput;
     private int deadLine;
 
+    public PCB getPCB() {
+        return PCB;
+    }
+
     public String getProcessName() {
         return processName;
     }
@@ -47,16 +51,16 @@ public class Process {
         this.deadLine = deadLine;
     }
     
-    public Process(PCB pcb){
-        this.PCB=pcb;
+    public Process(){
+        this.PCB=new PCB();
         this.duration=0;
         this.deadLine=0;
         this.inputOutput=null;
         this.processName=null;
     }
     
-    public Process periodicProcess(PCB pcb){
-        int id = pcb.getPriority();
+    public void periodicProcess(PCB pcb, Queue newQueue, String politic){
+        int id = pcb.getId();
         boolean flag = true;
         if ((id % 13 == 0)&&(flag)){
            flag = false;
@@ -66,45 +70,39 @@ public class Process {
            this.duration=20;
            this.deadLine=68;
            this.PCB.setSize(1);
-        }
-        if ((id % 11 == 0)&&(flag)){
-            flag = false;
+        }else if ((id % 11 == 0)&&(flag)){
+           flag = false;
            pcb.setPriority(2);
            this.processName="Temperature";
            this.inputOutput="Thermometer";
            this.duration=12;
            this.deadLine=40;
            this.PCB.setSize(5);
-
-        }
-        if ((id % 7 == 0)&&(flag)){
-            flag = false;
+        }else if ((id % 7 == 0)&&(flag)){
+           flag = false;
            pcb.setPriority(3);
            this.processName="Location";
            this.inputOutput="GNSS";
            this.duration=11;
            this.deadLine=38;
            this.PCB.setSize(8);
-        }
-        if ((id % 5 == 0)&&(flag)){
-            flag = false;
+        }else if ((id % 5 == 0)&&(flag)){
+           flag = false;
            pcb.setPriority(4);
            this.processName="Telemetry";
            this.duration=10;
            this.deadLine=20;
            this.PCB.setSize(15);
-        }
-        if ((id % 3 == 0)&&(flag)){
-            flag = false;
+        }else if ((id % 3 == 0)&&(flag)){
+           flag = false;
            pcb.setPriority(5);
            this.processName="Beacon Radio";
            this.inputOutput="Receptor";
            this.duration=6;
            this.deadLine=22;
            this.PCB.setSize(15);
-        }
-        if ((id % 2 == 0)&&(flag)){
-            flag = false;
+        }else if (flag){
+           flag = false;
            pcb.setPriority(6);
            this.processName="System Health";
            this.duration=2;
@@ -112,23 +110,26 @@ public class Process {
            this.PCB.setSize(60);
         }
         if ((id % 107==0) || (id % 113==0) || (id % 139==0) || (id % 101==0) || (id % 127==0)){
-            this.aperiodicProcess(pcb, flag);
+            Process aperiodicP = new Process();
+            aperiodicP.aperiodicProcess(false, newQueue, politic);
         }
-        return this; 
+        this.enqueue(politic, newQueue, pcb);
     }
     
     
     
-    public void aperiodicProcess(PCB pcb, boolean flag){
-        int id = (int) ((System.currentTimeMillis() % 10000000)+1);
-        pcb.setId(id);
+    public void aperiodicProcess(boolean flag, Queue newQueue, String politic){
+        int id = this.PCB.getId();
         if (flag){
-           /**
- * button call
- */
+            int counter = 10;
+            while (counter>10){
+                Process aperiodicButton = new Process();
+                aperiodicButton.aperiodicProcess(false, newQueue, politic);
+                counter -= 1;
+            }
         }else{
             if (id % 2 == 0){
-                pcb.setUser("Mission Control Center");
+                this.PCB.setUser("Mission Control Center");
                 flag = true;
                 if ((id % 3 == 0)&&(flag)){
                     flag = false;
@@ -137,7 +138,7 @@ public class Process {
                     this.duration=40;
                     this.deadLine=104;
                     this.PCB.setSize(150);
-                    pcb.setPriority(4);
+                    this.PCB.setPriority(4);
                 }
                 if (flag){
                     flag = false;
@@ -146,11 +147,11 @@ public class Process {
                     this.duration=80;
                     this.deadLine=204;
                     this.PCB.setSize(15);
-                    pcb.setPriority(4);
+                    this.PCB.setPriority(4);
                 }
             }else{
                 flag = true;
-                pcb.setUser("Emergency");
+                this.PCB.setUser("Emergency");
                 if ((id % 3 == 0)&&(flag)){
                     flag = false;
                     this.processName="Collision avoidance";
@@ -158,7 +159,7 @@ public class Process {
                     this.duration=10;
                     this.deadLine=38;
                     this.PCB.setSize(80);
-                    pcb.setPriority(7);
+                    this.PCB.setPriority(7);
                 }
                 if ((id % 5 == 0)&&(flag)){
                     flag = false;
@@ -167,7 +168,7 @@ public class Process {
                     this.duration=60;
                     this.deadLine=156;
                     this.PCB.setSize(1);
-                    pcb.setPriority(7);
+                    this.PCB.setPriority(7);
                     
                 }
                 if ((id % 7 == 0)&&(flag)){
@@ -177,7 +178,7 @@ public class Process {
                     this.duration=70;
                     this.deadLine=172;
                     this.PCB.setSize(10);
-                    pcb.setPriority(7);
+                    this.PCB.setPriority(7);
                 }
                 if (flag){
                     flag = false;
@@ -186,12 +187,22 @@ public class Process {
                     this.duration=20;
                     this.deadLine=64;
                     this.PCB.setSize(150);
-                    pcb.setPriority(7);
+                    this.PCB.setPriority(7);
                 }
             }
-        } 
-        /**
- * put in queue 
- */        
+            this.enqueue(politic, newQueue, PCB);
+        }       
+    }
+    
+    public void enqueue(String politic, Queue newQueue, PCB pcb){
+        if (politic == "FIFO" || politic == "RR"){
+            newQueue.enqueueFIFO(pcb);
+        }else if (politic == "SRT"){
+            newQueue.enqueueByRemainingTime(pcb);
+        }else if (politic == "Priority"){
+            newQueue.enqueueByPriority(pcb);
+        }else if (politic == "EDF"){
+            newQueue.enqueueByDeadline(pcb);
+        }
     }
 }
