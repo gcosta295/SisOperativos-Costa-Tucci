@@ -15,6 +15,7 @@ public class InputOutput {
     private int counter;
     private boolean inUse;
     private PCB pcbProcess;
+    private InputOutput next;
 
     public String getName() {
         return name;
@@ -40,6 +41,10 @@ public class InputOutput {
         return pcbProcess;
     }
 
+    public InputOutput getNext() {
+        return next;
+    }
+
     public void setName(String name) {
         this.name = name;
     }
@@ -62,6 +67,10 @@ public class InputOutput {
 
     public void setPcbProcess(PCB pcbProcess) {
         this.pcbProcess = pcbProcess;
+    }
+
+    public void setNext(InputOutput next) {
+        this.next = next;
     }
 
     public InputOutput(){

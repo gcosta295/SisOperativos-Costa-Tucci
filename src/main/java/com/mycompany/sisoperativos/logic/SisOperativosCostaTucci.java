@@ -16,12 +16,21 @@ public class SisOperativosCostaTucci {
         
         // Obtenemos la referencia directa de la cola del scheduler
         Queue readyQueue = scheduler.getQueue();
+        Queue listIO = new Queue();
 
         System.out.println("=== SISTEMA OPERATIVO: SIMULADOR DE PLANIFICACIÓN ===");
         System.out.println("Configurando procesos de prueba...\n");
 
         // 2. CREACIÓN DE PROCESOS (Usando tus métodos SET)
         scheduler.setPolitic("FIFO");
+        int indexIO = 6;
+        while (indexIO>=0){
+            InputOutput io = new InputOutput();
+            io.initializationIO(indexIO);
+            listIO.enqueueIO(io);
+            System.out.println(listIO.getLastIO().getName());
+            indexIO-=1;
+        }
         int counter = 20;
         while (counter>0){
             Process process = new Process();
