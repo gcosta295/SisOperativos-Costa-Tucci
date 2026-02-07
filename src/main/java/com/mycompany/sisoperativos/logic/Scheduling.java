@@ -49,7 +49,7 @@ public class Scheduling {
             } else if ("Priority".equals(this.politic)) {
                 newQueue.enqueueByPriority(aux);
             } else {
-                // Para RR y FCFS usamos FIFO simple
+                // Para RR y FIFO usamos FIFO simple
                 newQueue.enqueueFIFO(aux);
             }
             aux = queue.dequeue();

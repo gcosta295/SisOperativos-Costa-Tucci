@@ -21,41 +21,20 @@ public class SisOperativosCostaTucci {
         System.out.println("Configurando procesos de prueba...\n");
 
         // 2. CREACIÓN DE PROCESOS (Usando tus métodos SET)
-        
-        // Proceso 101: El "Lento" (Largo, poca prioridad, deadline lejano)
-        PCB p101 = new PCB();
-        p101.setId(101);
-        p101.setDurationR(12);  // 12 ciclos
-        p101.setPriority(1);    // Prioridad baja
-        p101.setDeadlineR(100); // Muy poco urgente
-        readyQueue.enqueueFIFO(p101);
-
-        // Proceso 202: El "Urgente" (Deadline muy cercano)
-        PCB p202 = new PCB();
-        p202.setId(202);
-        p202.setDurationR(5);
-        p202.setPriority(3);
-        p202.setDeadlineR(10);  // ¡Debe terminar pronto!
-        readyQueue.enqueueFIFO(p202);
-
-        // Proceso 303: El "VIP" (Alta prioridad)
-        PCB p303 = new PCB();
-        p303.setId(303);
-        p303.setDurationR(4);
-        p303.setPriority(10);   // Prioridad máxima
-        p303.setDeadlineR(50);
-        readyQueue.enqueueFIFO(p303);
-
-        // 3. INICIO DE LA SIMULACIÓN
-        // Empezamos con FCFS para que el Proceso 101 tome el CPU primero
-        scheduler.setPolitic("FCFS");
+        scheduler.setPolitic("FIFO");
+        int counter = 20;
+        while (counter>0){
+            Process process = new Process();
+            process.periodicProcess(process.getPCB(), readyQueue, scheduler.getPolitic());
+            counter-=1;
+        }
         
         Clock simClock = new Clock(1000, scheduler); // 1 segundo por ciclo para poder leer
         Thread hiloReloj = new Thread(simClock);
         hiloReloj.start();
 
         try {
-            // FCFS: El 101 debería correr sin interrupciones
+            // FIFO: El 101 debería correr sin interrupciones
             Thread.sleep(4500); 
 
             // --- PRUEBA SRT ---
@@ -84,6 +63,7 @@ public class SisOperativosCostaTucci {
             scheduler.setPolitic("RR");
             scheduler.Organize();
             // Aquí verás las expulsiones por Quantum cada 4 ciclos
+            System.out.println("end");
 
         } catch (InterruptedException e) {
             System.err.println("Error en el hilo principal: " + e.getMessage());
