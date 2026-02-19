@@ -122,7 +122,7 @@ public class Process {
         int id = this.PCB.getId();
         if (flag){
             int counter = 10;
-            while (counter>10){
+            while (counter>0){
                 Process aperiodicButton = new Process();
                 aperiodicButton.aperiodicProcess(false, newQueue, politic);
                 counter -= 1;
@@ -190,12 +190,13 @@ public class Process {
                     this.PCB.setPriority(7);
                 }
             }
+            System.out.println(this.getProcessName());
             this.enqueue(politic, newQueue, PCB);
         }       
     }
     
     public void enqueue(String politic, Queue newQueue, PCB pcb){
-        if (politic == "FIFO" || politic == "RR"){
+        if (politic == "FCFS" || politic == "RR"){
             newQueue.enqueueFIFO(pcb);
         }else if (politic == "SRT"){
             newQueue.enqueueByRemainingTime(pcb);

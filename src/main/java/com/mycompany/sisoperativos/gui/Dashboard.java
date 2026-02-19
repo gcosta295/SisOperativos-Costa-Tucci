@@ -8,6 +8,8 @@ import com.mycompany.sisoperativos.logic.Clock;
 import com.mycompany.sisoperativos.logic.PCB;
 import com.mycompany.sisoperativos.logic.Scheduling;
 import com.mycompany.sisoperativos.logic.Queue;
+import com.mycompany.sisoperativos.logic.Process;
+
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 
@@ -75,6 +77,7 @@ public class Dashboard extends javax.swing.JFrame {
         jScrollPane2 = new javax.swing.JScrollPane();
         txtConsola = new javax.swing.JTextArea();
         btnIniciar = new javax.swing.JButton();
+        random = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -186,6 +189,9 @@ public class Dashboard extends javax.swing.JFrame {
         btnIniciar.setText("jButton1");
         btnIniciar.addActionListener(this::btnIniciarActionPerformed);
 
+        random.setText("random");
+        random.addActionListener(this::randomActionPerformed);
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -196,7 +202,9 @@ public class Dashboard extends javax.swing.JFrame {
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(lblReloj, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(85, 85, 85)
-                        .addComponent(btnIniciar))
+                        .addComponent(btnIniciar)
+                        .addGap(45, 45, 45)
+                        .addComponent(random))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(23, 23, 23)
@@ -213,7 +221,8 @@ public class Dashboard extends javax.swing.JFrame {
                 .addGap(15, 15, 15)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblReloj, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnIniciar))
+                    .addComponent(btnIniciar)
+                    .addComponent(random))
                 .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(jPanel1Layout.createSequentialGroup()
@@ -255,6 +264,40 @@ public class Dashboard extends javax.swing.JFrame {
         } else {
             System.out.println("!!! ERROR: simClock es null. No se creó en el constructor.");
         }    }//GEN-LAST:event_btnIniciarActionPerformed
+
+    private void randomActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_randomActionPerformed
+        System.out.println("¡Botón presionado! Arrancando hilo generador...");
+
+        Thread hiloGenerador = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                for (int i = 0; i < 20; i++) {
+                    try {
+                        // Intentamos crear el proceso
+                        System.out.println(">>> Intentando crear proceso " + i + "...");
+                        Process newP = new Process();
+
+                        // Intentamos configurarlo y encolarlo
+                        newP.aperiodicProcess(false, scheduler.getReadyQueue(), scheduler.getPolitic());
+                        System.out.println(">>> Proceso " + i + " encolado correctamente.");
+
+                        // Actualizamos la tabla
+                        updateReadyQueue(scheduler.getReadyQueue());
+
+                        Thread.sleep(500);
+
+                    } catch (Exception e) { // ¡ATRAPAMOS EL ERROR SILENCIOSO!
+                        System.err.println("!!! ERROR FATAL creando el proceso " + i + " !!!");
+                        e.printStackTrace(); // Esto nos dirá la línea exacta del fallo
+                        break; // Abortamos el bucle para no lanzar 20 errores seguidos
+                    }
+                }
+                System.out.println("¡El hilo generador terminó!");
+            }
+        });
+
+        hiloGenerador.start();
+    }//GEN-LAST:event_randomActionPerformed
 
     /**
      * @param args the command line arguments
@@ -344,6 +387,7 @@ public class Dashboard extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JLabel lblReloj;
+    private javax.swing.JButton random;
     private javax.swing.JTable tablaBloqueados;
     private javax.swing.JTable tablaListos;
     private javax.swing.JTextArea txtConsola;
