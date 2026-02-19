@@ -113,6 +113,7 @@ public class Process {
             Process aperiodicP = new Process();
             aperiodicP.aperiodicProcess(false, newQueue, politic);
         }
+        this.pcbUpdate();
         this.enqueue(politic, newQueue, pcb);
     }
     
@@ -190,7 +191,7 @@ public class Process {
                     this.PCB.setPriority(7);
                 }
             }
-            System.out.println(this.getProcessName());
+            this.pcbUpdate();
             this.enqueue(politic, newQueue, PCB);
         }       
     }
@@ -205,5 +206,10 @@ public class Process {
         }else if (politic == "EDF"){
             newQueue.enqueueByDeadline(pcb);
         }
+    }
+    
+    public void pcbUpdate (){
+        this.PCB.setDeadlineR(deadLine);
+        this.PCB.setDurationR(duration);
     }
 }
