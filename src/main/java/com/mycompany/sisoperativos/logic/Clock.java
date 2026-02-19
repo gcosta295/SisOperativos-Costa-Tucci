@@ -4,6 +4,8 @@
  */
 package com.mycompany.sisoperativos.logic;
 
+import com.mycompany.sisoperativos.gui.Dashboard;
+
 /**
  *
  * @author gabri
@@ -15,10 +17,12 @@ public class Clock implements Runnable {
     private int duracionCicloMs; // Tiempo en milisegundos que dura cada ciclo
     private boolean encendido = true;
     private final Scheduling scheduler;
+    private Dashboard gui;
 
-    public Clock(int duracionInicial, Scheduling scheduler) {
+    public Clock(int duracionInicial, Scheduling scheduler, Dashboard gui) {
         this.duracionCicloMs = duracionInicial;
         this.scheduler = scheduler;
+        this.gui = gui;
     }
 
     // Método para cambiar la velocidad del reloj en tiempo real
@@ -49,23 +53,35 @@ public class Clock implements Runnable {
     public void setEncendido(boolean encendido) {
         this.encendido = encendido;
     }
-    
+
     @Override
     public void run() {
-        try {
-            while (encendido) {
+        while (true) {
+            try {
+                Thread.sleep(duracionCicloMs);
                 contadorCiclos++;
-                System.out.println("[CLOCK] Cycle: " + contadorCiclos);
 
-                // IMPORTANT: Tell the scheduler to process one cycle
-                if (scheduler != null) {
-                    scheduler.runExecutionCycle();
+                // 1. Imprimir en consola para saber si el reloj sigue vivo
+                System.out.println(">>> Reloj Tick: " + contadorCiclos);
+
+                scheduler.runExecutionCycle();
+
+                // 2. Comprobar si la ventana existe antes de actualizar
+                if (gui != null) {
+                    gui.updateStatus(contadorCiclos, scheduler.getCurrentProcess());
+                    gui.updateReadyQueue(scheduler.getReadyQueue());
+                    gui.updateBlockedQueue(scheduler.getBlockedQueue());
+                } else {
+                    System.out.println("!!! ERROR: El reloj no tiene conexión con la ventana (gui es null)");
                 }
 
-                Thread.sleep(duracionCicloMs);
+            } catch (Exception e) {
+                // ¡AQUÍ ESTÁ LA MAGIA! 
+                // Cambiamos InterruptedException por Exception general para atrapar CUALQUIER error.
+                System.err.println("¡CRASH EN EL RELOJ! Motivo:");
+                e.printStackTrace();
+                break; // Detenemos el ciclo roto
             }
-        } catch (InterruptedException e) {
-            System.out.println("Simulation clock interrupted.");
         }
     }
 }
