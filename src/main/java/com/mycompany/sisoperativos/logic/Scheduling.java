@@ -4,43 +4,50 @@
  */
 package com.mycompany.sisoperativos.logic;
 
+import com.mycompany.sisoperativos.gui.Dashboard;
+
 /**
  *
  * @author gabri
  */
 public class Scheduling {
 
-    private Queue queue;
+    private Queue readyQueue;
+    private Queue blockedQueue;
     private String politic;
     private int System_Quantum;
     private PCB currentProcess;
+    private Dashboard gui;
 
     public void setSystem_Quantum(int System_Quantum) {
         this.System_Quantum = System_Quantum;
+        
     }
 
     public int getSystem_Quantum() {
         return System_Quantum;
     }
 
-    public Scheduling() {
-        this.queue = new Queue();
+    public Scheduling(Dashboard gui) {
+        this.readyQueue = new Queue();
         this.politic = null;
+        this.blockedQueue = new Queue();
         this.currentProcess = null;
         this.System_Quantum = 10;
+        this.gui = gui;
     }
 
     public void createScheduling(Queue oldQueue, String politic) {
-        this.queue = oldQueue;
+        this.readyQueue = oldQueue;
         this.politic = politic;
     }
 
     public void Organize() {
-        if (this.queue.getLen() == 0 && this.currentProcess == null) {
+        if (this.readyQueue.getLen() == 0 && this.currentProcess == null) {
             return;
         }
         Queue newQueue = new Queue();
-        PCB aux = queue.dequeue();
+        PCB aux = readyQueue.dequeue();
         while (aux != null) {
             if ("EDF".equals(this.politic)) {
                 newQueue.enqueueByDeadline(aux);
@@ -52,21 +59,21 @@ public class Scheduling {
                 // Para RR y FIFO usamos FIFO simple
                 newQueue.enqueueFIFO(aux);
             }
-            aux = queue.dequeue();
+            aux = readyQueue.dequeue();
         }
         // IMPORTANTE: Reemplazar la cola vieja con la nueva ya ordenada
-        this.queue = newQueue;
+        this.readyQueue = newQueue;
     }
 
     public void runExecutionCycle() {
         // 1. Cargar proceso si el CPU está vacío
         // 1. Reducir Deadline de los que están en la cola (El tiempo no perdona)
-        PCB temp = queue.peek();
+            PCB temp = readyQueue.peek();
         // Suponiendo que tienes un método para recorrer la cola o 
         // puedes restar el tiempo a todos los procesos en espera.
         updateQueueDeadlines();
         if (currentProcess == null) {
-            currentProcess = queue.dequeue();
+            currentProcess = readyQueue.dequeue();
             if (currentProcess != null) {
                 currentProcess.setQuantum(0);
             }
@@ -78,7 +85,7 @@ public class Scheduling {
             currentProcess.setQuantum(currentProcess.getQuantum() + 1);
             currentProcess.setDeadlineR(currentProcess.getDeadlineR() - 1);
 
-            System.out.println("Executing ID: " + currentProcess.getId() + " [Rem: " + currentProcess.getDurationR() + "]" + " [Deadline: " + currentProcess.getDeadlineR() + "]");
+            gui.log("Executing ID: " + currentProcess.getId() + " [Rem: " + currentProcess.getDurationR() + "]" + " [Deadline: " + currentProcess.getDeadlineR() + "]");
 
             // 2. ¿Terminó?
             if (currentProcess.getDurationR() <= 0) {
@@ -91,7 +98,7 @@ public class Scheduling {
             }
 
             // 3. LÓGICA DE PREEMPCIÓN (REALISMO ESTRICTO)
-            PCB nextInQueue = queue.getFirstP(); // Solo miramos el primero sin sacarlo
+            PCB nextInQueue = readyQueue.getFirstP(); // Solo miramos el primero sin sacarlo
 
             if (nextInQueue != null) {
                 boolean expulsar = false;
@@ -122,23 +129,23 @@ public class Scheduling {
 
                 if (expulsar) {
                     currentProcess.setQuantum(0);
-                    queue.enqueueFIFO(currentProcess); // El actual vuelve a la cola
+                    readyQueue.enqueueFIFO(currentProcess); // El actual vuelve a la cola
                     currentProcess = null; // El CPU queda libre para el "retador" en el ciclo siguiente
                 }
             }
         }
     }
 
-    public Queue getQueue() {
-        return this.queue;
+    public Queue getReadyQueue() {
+        return this.readyQueue;
     }
 
     public String getPolitic() {
         return this.politic;
     }
 
-    public void setQueue(Queue queue) {
-        this.queue = queue;
+    public void setReadyQueue(Queue readyQueue) {
+        this.readyQueue = readyQueue;
     }
 
     public void setPolitic(String nueva) {
@@ -152,6 +159,42 @@ public class Scheduling {
     private void updateQueueDeadlines() {
         // Necesitas un método en tu clase Queue que permita 
         // restar 1 al DeadlineR de todos los PCB sin sacarlos de la fila.
-        queue.decrementAllDeadlines();
+        readyQueue.decrementAllDeadlines();
     }
+
+    // Método para simular que el proceso actual pide E/S
+    public void blockCurrentProcess() {
+        if (currentProcess != null) {
+            currentProcess.setState("Blocked");
+            blockedQueue.enqueueFIFO(currentProcess); // Se va a la "sala de espera"
+            currentProcess = null; // El CPU queda libre
+            System.out.println("!!! PROCESO BLOQUEADO POR E/S !!!");
+        }
+    }
+    
+    public void unblockProcess(int id) {
+        // Buscamos el proceso en la cola de bloqueados y lo pasamos a listos
+        PCB p = blockedQueue.extractById(id); 
+        if (p != null) {
+            p.setState("Ready");
+            readyQueue.enqueueFIFO(p); // Vuelve a competir por el CPU
+            System.out.println("ID " + id + " ha terminado su E/S y vuelve a Ready.");
+            
+            // Si la política es Preemptiva (EDF/SRT), deberíamos organizar
+            this.Organize(); 
+        }
+    }
+
+    public Queue getBlockedQueue() {
+        return blockedQueue;
+    }
+
+    public PCB getCurrentProcess() {
+        return currentProcess;
+    }
+
+    public Object getQueue() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
 }
