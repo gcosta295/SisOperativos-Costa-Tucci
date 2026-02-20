@@ -20,6 +20,7 @@ public class Scheduling {
     private int System_Quantum;
     private PCB currentProcess;
     private Dashboard gui;
+    private int ramSize;
 
     public Queue getIoQueue() {
         return ioQueue;
@@ -47,6 +48,7 @@ public class Scheduling {
         this.currentProcess = null;
         this.System_Quantum = 10;
         this.gui = gui;
+        this.ramSize = 256;
     }
 
     public Queue getFinishedQueue() {
