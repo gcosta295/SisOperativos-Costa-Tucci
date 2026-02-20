@@ -14,7 +14,7 @@ public class Clock implements Runnable {
 //Se agrega el "Runnable" a la clase del reloj para que sea capaz de poder correr en un hilo nuevo
 
     private int contadorCiclos = 0; //Siempre el reloj arranca en 0
-    private int duracionCicloMs; // Tiempo en milisegundos que dura cada ciclo
+    private volatile int duracionCicloMs; // Tiempo en milisegundos que dura cada ciclo
     private boolean encendido = true;
     private final Scheduling scheduler;
     private Dashboard gui;
