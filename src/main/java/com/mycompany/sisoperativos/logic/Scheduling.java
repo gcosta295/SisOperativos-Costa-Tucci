@@ -14,10 +14,19 @@ public class Scheduling {
 
     private Queue readyQueue;
     private Queue blockedQueue;
+    private Queue ioQueue;
     private String politic;
     private int System_Quantum;
     private PCB currentProcess;
     private Dashboard gui;
+
+    public Queue getIoQueue() {
+        return ioQueue;
+    }
+
+    public void setIoQueue(Queue ioQueue) {
+        this.ioQueue = ioQueue;
+    }
 
     public void setSystem_Quantum(int System_Quantum) {
         this.System_Quantum = System_Quantum;
@@ -30,6 +39,7 @@ public class Scheduling {
 
     public Scheduling(Dashboard gui) {
         this.readyQueue = new Queue();
+        this.ioQueue = new Queue();
         this.politic = null;
         this.blockedQueue = new Queue();
         this.currentProcess = null;

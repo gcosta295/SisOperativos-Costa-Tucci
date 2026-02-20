@@ -9,6 +9,7 @@ import com.mycompany.sisoperativos.logic.PCB;
 import com.mycompany.sisoperativos.logic.Scheduling;
 import com.mycompany.sisoperativos.logic.Queue;
 import com.mycompany.sisoperativos.logic.Process;
+import com.mycompany.sisoperativos.logic.InputOutput;
 
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
@@ -32,23 +33,21 @@ public class Dashboard extends javax.swing.JFrame {
 
         // 1. Inicializamos tu motor
         scheduler = new Scheduling(this);
-        scheduler.setPolitic("FCFS"); // O la política que quieras
+        scheduler.setPolitic("FIFO"); // O la política que quieras
 
-        // 2. Metemos un par de procesos de prueba a la cola
-        PCB p1 = new PCB();
-        p1.setId(101);
-        p1.setDurationR(10);
-        p1.setPriority(1);
-        p1.setDeadlineR(20);
-        scheduler.getReadyQueue().enqueueFIFO(p1);
-
-        PCB p2 = new PCB();
-        p2.setId(202);
-        p2.setDurationR(5);
-        p2.setPriority(5);
-        p2.setDeadlineR(10);
-        scheduler.getReadyQueue().enqueueFIFO(p2);
-
+        int indexIO = 6;
+        while (indexIO>=0){
+            InputOutput io = new InputOutput();
+            io.initializationIO(indexIO);
+            scheduler.getIoQueue().enqueueIO(io);
+            indexIO-=1;
+        }
+        int counter = 20;
+        while (counter>0){
+            Process process = new Process();
+            process.periodicProcess(process.getPCB(), scheduler.getReadyQueue(), scheduler.getPolitic());
+            counter-=1;
+        }
         // 3. ¡IMPORTANTE! Creamos el reloj y le pasamos "this" (esta ventana)
         simClock = new Clock(1000, scheduler, this);
     }

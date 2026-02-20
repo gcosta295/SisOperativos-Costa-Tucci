@@ -187,7 +187,7 @@ public class Process {
     }
     
     public void enqueue(String politic, Queue newQueue, PCB pcb){
-        if (politic == "FCFS" || politic == "RR"){
+        if (politic == "FIFO" || politic == "RR"){
             newQueue.enqueueFIFO(pcb);
         }else if (politic == "SRT"){
             newQueue.enqueueByRemainingTime(pcb);
