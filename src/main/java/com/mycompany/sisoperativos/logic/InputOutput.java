@@ -14,6 +14,7 @@ public class InputOutput {
     private int timer;
     private int counter;
     private boolean inUse;
+    private Queue IOQueue;
     private PCB pcbProcess;
     private InputOutput next;
 
@@ -45,6 +46,10 @@ public class InputOutput {
         return next;
     }
 
+    public Queue getIOQueue() {
+        return IOQueue;
+    }
+
     public void setName(String name) {
         this.name = name;
     }
@@ -73,6 +78,10 @@ public class InputOutput {
         this.next = next;
     }
 
+    public void setIOQueue(Queue IOQueue) {
+        this.IOQueue = IOQueue;
+    }
+
     public InputOutput(){
         this.counter=0;
         this.pcbProcess=null;
@@ -80,6 +89,7 @@ public class InputOutput {
         this.name=null;
         this.totalTime=0;
         this.timer=0;
+        this.IOQueue=new Queue();
     }
     
     public void initializationIO(int index){
@@ -126,4 +136,14 @@ public class InputOutput {
             this.timer=16;
         }
     } 
+    
+    public void ioChecker(PCB pcb){
+        if (this.pcbProcess==null){
+            this.pcbProcess=pcb;
+        }else{
+            this.IOQueue.enqueueFIFO(pcb);
+        }
+    }
+    
+    
 }
