@@ -275,6 +275,19 @@ public class Queue {
             this.lastIO = io;
         }
     }
+    
+    public InputOutput serchByName(String ioName){
+        InputOutput checker = this.firstIO;
+        boolean flag = true;
+        while (flag){
+            if (checker.getName() == ioName){
+                flag=false;
+            }else{
+                checker=checker.getNext();
+            }
+        }
+        return checker;
+    }
 
     public PCB extractById(int id) {
         if (this.firstP == null) {
