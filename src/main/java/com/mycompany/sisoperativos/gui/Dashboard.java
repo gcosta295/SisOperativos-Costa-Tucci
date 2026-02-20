@@ -37,7 +37,10 @@ public class Dashboard extends javax.swing.JFrame {
         scheduler.getBlockedQueue().setName("BlockedQueue");
         scheduler.getIoQueue().setName("IoQueue");
         scheduler.setPolitic("FIFO"); // O la política que quieras
-
+        jComboBox1.setEnabled(false);
+        tiempoReloj.setEnabled(false);
+        random.setEnabled(false);
+        jButton2.setEnabled(false);
         int indexIO = 6;
         while (indexIO >= 0) {
             InputOutput io = new InputOutput();
@@ -108,6 +111,7 @@ public class Dashboard extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         tablaSusListos = new javax.swing.JTable();
         tiempoReloj = new javax.swing.JComboBox<>();
+        barraProgreso = new javax.swing.JProgressBar();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -156,7 +160,7 @@ public class Dashboard extends javax.swing.JFrame {
                         .addComponent(txtCpuDL, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(txtCpuPriority, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(txtCpuRem, javax.swing.GroupLayout.PREFERRED_SIZE, 172, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(177, Short.MAX_VALUE))
+                .addContainerGap(148, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -322,6 +326,12 @@ public class Dashboard extends javax.swing.JFrame {
         tiempoReloj.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Normal (0.5s)", "Rápido (0.2s)", "Turbo (0.1s)", "Lento (1s)", "Muy Lento (2s)" }));
         tiempoReloj.addActionListener(this::tiempoRelojActionPerformed);
 
+        barraProgreso.setBackground(new java.awt.Color(204, 255, 255));
+        barraProgreso.setFont(new java.awt.Font("Segoe UI", 1, 10)); // NOI18N
+        barraProgreso.setOpaque(true);
+        barraProgreso.setStringPainted(true);
+        barraProgreso.addChangeListener(this::barraProgresoStateChanged);
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -347,12 +357,14 @@ public class Dashboard extends javax.swing.JFrame {
                         .addGap(50, 50, 50)
                         .addComponent(tiempoReloj, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(56, 56, 56)
-                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(64, 64, 64)
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 467, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 282, Short.MAX_VALUE)
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 467, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addGap(56, 56, 56)
+                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(46, 46, 46)
+                .addComponent(barraProgreso, javax.swing.GroupLayout.PREFERRED_SIZE, 254, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 62, Short.MAX_VALUE)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(tablaSusBloqueados, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -361,14 +373,19 @@ public class Dashboard extends javax.swing.JFrame {
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(33, 33, 33)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(btnIniciar)
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(random)
-                        .addComponent(jButton2)
-                        .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(tiempoReloj, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(33, 33, 33)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(btnIniciar)
+                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(random)
+                                .addComponent(jButton2)
+                                .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(tiempoReloj, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(36, 36, 36)
+                        .addComponent(barraProgreso, javax.swing.GroupLayout.PREFERRED_SIZE, 53, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
@@ -414,6 +431,10 @@ public class Dashboard extends javax.swing.JFrame {
             Thread hiloReloj = new Thread(simClock);
             hiloReloj.start();
             btnIniciar.setEnabled(false);
+            jComboBox1.setEnabled(true);
+            tiempoReloj.setEnabled(true);
+            random.setEnabled(true);
+            jButton2.setEnabled(true);
         } else {
             System.out.println("!!! ERROR: simClock es null. No se creó en el constructor.");
         }    }//GEN-LAST:event_btnIniciarActionPerformed
@@ -505,6 +526,25 @@ public class Dashboard extends javax.swing.JFrame {
         hiloGenerador.start();
     }//GEN-LAST:event_jButton2ActionPerformed
 
+    public void actualizarBarraGlobal() {
+        SwingUtilities.invokeLater(() -> {
+            // 1. Variable A: Exitosos (Tamaño de la cola de finalizados)
+            int totales = scheduler.getFinishedQueue().getLen();
+
+            // 2. Variable B: Totales
+            int exitosos = scheduler.getSuccessFinish();
+
+            if (totales > 0) {
+                barraProgreso.setMaximum(totales);
+                barraProgreso.setValue(exitosos);
+
+                // Calculamos porcentaje para el texto
+                int porcentaje = (int) ((exitosos * 100.0f) / totales);
+                barraProgreso.setString("Exito: " + porcentaje + "% (" + exitosos + "/" + totales + ")");
+                barraProgreso.repaint();
+            }
+        });
+    }
     private void tiempoRelojActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tiempoRelojActionPerformed
         // 1. Obtenemos el texto de la opción seleccionada
         String velocidadSeleccionada = (String) tiempoReloj.getSelectedItem();
@@ -538,6 +578,10 @@ public class Dashboard extends javax.swing.JFrame {
             log("!!! Aviso: Arranca el simulador primero para cambiar la velocidad.");
         }
     }//GEN-LAST:event_tiempoRelojActionPerformed
+
+    private void barraProgresoStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_barraProgresoStateChanged
+        // TODO add your handling code here:
+    }//GEN-LAST:event_barraProgresoStateChanged
 
     /**
      * @param args the command line arguments
@@ -628,6 +672,7 @@ public class Dashboard extends javax.swing.JFrame {
                     aux = aux.getNext();
                 }
             }
+            actualizarBarraGlobal();
         });
     }
 
@@ -642,8 +687,9 @@ public class Dashboard extends javax.swing.JFrame {
                 txtCpuRem.setText("Tiempo Restante: " + current.getDurationR());
                 txtCpuPriority.setText("Prioridad: " + current.getPriority());
                 txtCpuDL.setText("Deadline: " + current.getDeadlineR());
+
             } else {
-                txtCpuId.setText("CPU VACÍO");
+                txtCpuId.setText("SO CAMBIO DE CONTEXTO");
                 txtCpuRem.setText("-");
                 txtCpuPriority.setText("-");
             }
@@ -652,6 +698,7 @@ public class Dashboard extends javax.swing.JFrame {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JProgressBar barraProgreso;
     private javax.swing.JButton btnIniciar;
     private javax.swing.JButton jButton2;
     private javax.swing.JComboBox<String> jComboBox1;
