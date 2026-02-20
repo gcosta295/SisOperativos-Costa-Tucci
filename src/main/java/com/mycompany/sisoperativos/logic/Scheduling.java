@@ -21,6 +21,7 @@ public class Scheduling {
     private PCB currentProcess;
     private Dashboard gui;
     private int ramSize;
+    private int successFinish;
 
     public Queue getIoQueue() {
         return ioQueue;
@@ -49,10 +50,15 @@ public class Scheduling {
         this.System_Quantum = 10;
         this.gui = gui;
         this.ramSize = 256;
+        this.successFinish = 0;
     }
 
     public Queue getFinishedQueue() {
         return this.finishedQueue;
+    }
+
+    public int getSuccessFinish() {
+        return successFinish;
     }
 
     public void createScheduling(Queue oldQueue, String politic) {
@@ -61,24 +67,28 @@ public class Scheduling {
     }
 
     public void Organize() {
-        if (this.readyQueue.getLen() == 0 && this.currentProcess == null) {
-            return;
-        }
-        Queue newQueue = new Queue();
-        PCB aux = readyQueue.dequeue();
-        while (aux != null) {
-            if ("EDF".equals(this.politic)) {
-                newQueue.enqueueByDeadline(aux);
-            } else if ("SRT".equals(this.politic)) {
-                newQueue.enqueueByRemainingTime(aux);
-            } else if ("Priority".equals(this.politic)) {
-                newQueue.enqueueByPriority(aux);
-            } else {
-                newQueue.enqueueFIFO(aux);
+        synchronized (readyQueue) {
+            if (this.readyQueue.getLen() == 0 && this.currentProcess == null) {
+                return;
             }
-            aux = readyQueue.dequeue();
+            Queue newQueue = new Queue();
+            PCB aux = readyQueue.dequeue();
+            while (aux != null) {
+                if ("EDF".equals(this.politic)) {
+                    newQueue.enqueueByDeadline(aux);
+                } else if ("SRT".equals(this.politic)) {
+                    newQueue.enqueueByRemainingTime(aux);
+                } else if ("Priority".equals(this.politic)) {
+                    newQueue.enqueueByPriority(aux);
+                } else {
+                    // Para RR y FIFO usamos FIFO simple
+                    newQueue.enqueueFIFO(aux);
+                }
+                aux = readyQueue.dequeue();
+            }
+            // IMPORTANTE: Reemplazar la cola vieja con la nueva ya ordenada
+            this.readyQueue = newQueue;
         }
-        this.readyQueue = newQueue;
     }
 
     public void runExecutionCycle() {
@@ -104,6 +114,7 @@ public class Scheduling {
                 gui.log("Proceso " + currentProcess.getId() + " finalizado con ÉXITO.");
                 currentProcess.setState("Exit");
                 if (finishedQueue != null) {
+                    successFinish += 1;
                     finishedQueue.enqueueFIFO(currentProcess);
                 }
                 currentProcess = null; // Liberamos el CPU para el próximo ciclo
@@ -122,17 +133,17 @@ public class Scheduling {
                 if (nextInQueue != null) {
                     boolean expulsar = false;
 
-                    if ("RR".equals(this.politic) && currentProcess.getQuantum() >= 4) {
-                        System.out.println("!!! QUANTUM EXPIRED !!!");
+                    if ("RR".equals(this.politic) && currentProcess.getQuantum() >= 8) {
+                        gui.log("!!! QUANTUM EXPIRED !!!");
                         expulsar = true;
                     } else if ("SRT".equals(this.politic) && nextInQueue.getDurationR() < currentProcess.getDurationR()) {
-                        System.out.println("!!! PREEMPTION (SRT) !!! ID " + nextInQueue.getId() + " es más corto.");
+                        gui.log("!!! PREEMPTION (SRT) !!! ID " + nextInQueue.getId() + " es más corto.");
                         expulsar = true;
                     } else if ("EDF".equals(this.politic) && nextInQueue.getDeadlineR() < currentProcess.getDeadlineR()) {
-                        System.out.println("!!! PREEMPTION (EDF) !!! ID " + nextInQueue.getId() + " es más urgente.");
+                        gui.log("!!! PREEMPTION (EDF) !!! ID " + nextInQueue.getId() + " es más urgente.");
                         expulsar = true;
                     } else if ("Priority".equals(this.politic) && nextInQueue.getPriority() > currentProcess.getPriority()) {
-                        System.out.println("!!! PREEMPTION (PRIORITY) !!! ID " + nextInQueue.getId() + " tiene más prioridad.");
+                        gui.log("!!! PREEMPTION (PRIORITY) !!! ID " + nextInQueue.getId() + " tiene más prioridad.");
                         expulsar = true;
                     }
 
@@ -221,6 +232,7 @@ public class Scheduling {
             while (aux != null) {
                 // Restamos 1 al tiempo límite por el ciclo que acaba de pasar
                 aux.setDeadlineR(aux.getDeadlineR() - 1);
+          
 
                 // ¿Se le acabó el tiempo antes de terminar su ráfaga?
                 if (aux.getDeadlineR() <= 0 && aux.getDurationR() > 0) {
