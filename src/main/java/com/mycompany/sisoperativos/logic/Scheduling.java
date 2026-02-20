@@ -60,11 +60,15 @@ public class Scheduling {
         this.politic = politic;
     }
 
-    public void Organize() {
+public void Organize() {
+    // Sincronizamos sobre el objeto de la cola para que nadie la toque mientras reordenamos
+    synchronized(this.readyQueue) {
         if (this.readyQueue.getLen() == 0 && this.currentProcess == null) {
             return;
         }
         Queue newQueue = new Queue();
+        newQueue.setName("ReadyQueue"); // Mantener el nombre es vital por tus IFs
+        
         PCB aux = readyQueue.dequeue();
         while (aux != null) {
             if ("EDF".equals(this.politic)) {
@@ -80,6 +84,7 @@ public class Scheduling {
         }
         this.readyQueue = newQueue;
     }
+}
 
     public void runExecutionCycle() {
         if (currentProcess == null) {
