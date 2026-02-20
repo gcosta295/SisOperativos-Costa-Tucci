@@ -11,7 +11,7 @@ package com.mycompany.sisoperativos.logic;
 public class InputOutput {
     private String name;
     private int totalTime;
-    private int responseTime;
+    private int timer;
     private int counter;
     private boolean inUse;
     private Queue IOQueue;
@@ -26,8 +26,8 @@ public class InputOutput {
         return totalTime;
     }
 
-    public int getTesponseTime() {
-        return responseTime;
+    public int getTimer() {
+        return timer;
     }
 
     public int getCounter() {
@@ -66,8 +66,8 @@ public class InputOutput {
         this.inUse = inUse;
     }
 
-    public void setResponseTime(int responseTime) {
-        this.responseTime = responseTime;
+    public void setTimer(int timer) {
+        this.timer = timer;
     }
 
     public void setPcbProcess(PCB pcbProcess) {
@@ -88,7 +88,7 @@ public class InputOutput {
         this.inUse=false;
         this.name=null;
         this.totalTime=0;
-        this.responseTime=0;
+        this.timer=0;
         this.IOQueue=new Queue();
     }
     
@@ -97,43 +97,43 @@ public class InputOutput {
             this.counter=2;
             this.name="Receptor";
             this.totalTime=5;
-            this.responseTime=7;
+            this.timer=7;
         }
         if(index==1){
             this.counter=4;
             this.name="GNSS";
             this.totalTime=4;
-            this.responseTime=8    ;
+            this.timer=8    ;
         }
         if(index==2){
             this.counter=6;
             this.name="Thermometer";
             this.totalTime=2;
-            this.responseTime=8;
+            this.timer=8;
         }
         if(index==3){
             this.counter=8;
             this.name="SD Memory";
             this.totalTime=6;
-            this.responseTime=14;
+            this.timer=14;
         }
         if(index==4){
             this.counter=1;
             this.name="Sensor";
             this.totalTime=8;
-            this.responseTime=9;
+            this.timer=9;
         }
         if(index==5){
             this.counter=6;
             this.name="Sysadmin";
             this.totalTime=6;
-            this.responseTime=12;
+            this.timer=12;
         }
         if(index==6){
             this.counter=6;
             this.name="Radiation Detector";
             this.totalTime=10;
-            this.responseTime=16;
+            this.timer=16;
         }
     } 
     
