@@ -16,10 +16,12 @@ public class PCB {
     private PCB before;
     private PCB next;
     private int quantum;
+    private int durationHope;
     private int deadlineR;
     private int durationR;
     private String inputOutput;
     private int size;
+    private PCB nextIO;
 
     public int getId() {
         return id;
@@ -65,6 +67,10 @@ public class PCB {
         return inputOutput;
     }
 
+    public int getDurationHope() {
+        return durationHope;
+    }
+
     public void setId(int id) {
         this.id = id;
     }
@@ -108,6 +114,18 @@ public class PCB {
     public void setInputOutput(String inputOutput) {
         this.inputOutput = inputOutput;
     }
+
+    public void setDurationHope(int durationHope) {
+        this.durationHope = durationHope;
+    }
+    
+    public PCB getNextIO() {
+        return nextIO;
+    }
+
+    public void setNextIO(PCB nextIO) {
+        this.nextIO = nextIO;
+    }
          
     public PCB() {
         long time = System.nanoTime();
@@ -116,7 +134,9 @@ public class PCB {
         this.priority=0;
         this.before=null;
         this.next=null;
+        this.nextIO=null;
         this.quantum=0;
+        this.durationHope=0;
         this.deadlineR=0;
         this.durationR=0;
         this.size=0;

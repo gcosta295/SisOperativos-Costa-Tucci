@@ -33,7 +33,9 @@ public class Dashboard extends javax.swing.JFrame {
 
         // 1. Inicializamos tu motor
         scheduler = new Scheduling(this);
-        scheduler.setPolitic("FIFO"); // O la política que quieras
+        scheduler.getReadyQueue().setName("ReadyQueue");
+        scheduler.getBlockedQueue().setName("BlockedQueue");
+        scheduler.setPolitic("FIFO");
         jComboBox1.setEnabled(false);
         tiempoReloj.setEnabled(false);
         random.setEnabled(false);
@@ -444,23 +446,31 @@ public class Dashboard extends javax.swing.JFrame {
             public void run() {
                 for (int i = 0; i < 20; i++) {
                     try {
-                        // Intentamos crear el proceso
+                        // 1. Creamos el proceso afuera del candado (esto no rompe nada)
                         System.out.println(">>> Intentando crear proceso " + i + "...");
                         Process newP = new Process();
 
-                        // Intentamos configurarlo y encolarlo
-                        newP.aperiodicProcess(false, scheduler.getReadyQueue(), scheduler.getPolitic());
-                        System.out.println(">>> Proceso " + i + " encolado correctamente.");
+                        // 2. ¡CERRAMOS EL CANDADO! Pedimos permiso exclusivo
+                        synchronized (scheduler.lock) {
 
-                        // Actualizamos la tabla
-                        updateReadyQueue(scheduler.getReadyQueue());
+                            // Intentamos configurarlo y encolarlo
+                            newP.aperiodicProcess(false, scheduler.getReadyQueue(), scheduler.getPolitic());
+                            System.out.println(">>> Proceso " + i + " encolado correctamente.");
 
+                            // Si tu simulador requiere reordenar (Priority, SRT, EDF), descomenta esto:
+                            // scheduler.Organize();
+                            // Actualizamos la tabla leyendo la cola de forma segura
+                            updateReadyQueue(scheduler.getReadyQueue());
+
+                        } // 3. ¡ABRIMOS EL CANDADO! El scheduler puede volver a trabajar.
+
+                        // 4. Pausamos el hilo medio segundo AFUERA del candado
                         Thread.sleep(500);
 
-                    } catch (Exception e) { // ¡ATRAPAMOS EL ERROR SILENCIOSO!
+                    } catch (Exception e) {
                         System.err.println("!!! ERROR FATAL creando el proceso " + i + " !!!");
-                        e.printStackTrace(); // Esto nos dirá la línea exacta del fallo
-                        break; // Abortamos el bucle para no lanzar 20 errores seguidos
+                        e.printStackTrace();
+                        break;
                     }
                 }
                 System.out.println("¡El hilo generador terminó!");
@@ -495,47 +505,58 @@ public class Dashboard extends javax.swing.JFrame {
         Thread hiloGenerador = new Thread(new Runnable() {
             @Override
             public void run() {
-
                 try {
-                    // Intentamos crear el proceso
+                    // Creamos el proceso (esto no afecta a las colas, así que va afuera)
                     System.out.println(">>> Intentando crear proceso ...");
                     Process newP = new Process();
 
-                    // Intentamos configurarlo y encolarlo
-                    newP.aperiodicProcess(false, scheduler.getReadyQueue(), scheduler.getPolitic());
-                    System.out.println(">>> Proceso encolado correctamente.");
+                    // ¡AQUÍ PONEMOS EL CANDADO!
+                    // Pedimos permiso para tocar las colas del scheduler
+                    synchronized (scheduler.lock) {
 
-                    // Actualizamos la tabla
-                    updateReadyQueue(scheduler.getReadyQueue());
+                        // 1. Configuramos y encolamos de forma segura
+                        newP.aperiodicProcess(false, scheduler.getReadyQueue(), scheduler.getPolitic());
+                        System.out.println(">>> Proceso encolado correctamente.");
 
-                    Thread.sleep(500);
+                        // 2. Si tu política lo requiere, este es el momento perfecto para reorganizar
+                        scheduler.Organize();
 
-                } catch (Exception e) { // ¡ATRAPAMOS EL ERROR SILENCIOSO!
+                        // 3. Actualizamos la tabla de la interfaz
+                        updateReadyQueue(scheduler.getReadyQueue());
+
+                    } // ¡SE LIBERA EL CANDADO! 
+                    // A partir de aquí, el reloj de simulación puede volver a trabajar.
+
+                    // OJO: El sleep DEBE ir afuera del candado. 
+                    // Si lo pones adentro, congelas toda la simulación por medio segundo.
+                    Thread.sleep(800);
+
+                } catch (Exception e) {
                     System.err.println("!!! ERROR FATAL creando el proceso !!!");
-                    e.printStackTrace(); // Esto nos dirá la línea exacta del fallo
-
+                    e.printStackTrace();
                 }
 
                 System.out.println("¡El hilo generador terminó!");
             }
         });
-
-        hiloGenerador.start();
+        hiloGenerador.start(); // ¡No olvides iniciar el hilo si no lo tenías!
     }//GEN-LAST:event_jButton2ActionPerformed
 
     public void actualizarBarraGlobal() {
         SwingUtilities.invokeLater(() -> {
-            // 1. Variable A: Exitosos (Tamaño de la cola de finalizados)
-            int totales = scheduler.getFinishedQueue().getLen();
+            int totales;
+            int exitosos;
 
-            // 2. Variable B: Totales
-            int exitosos = scheduler.getSuccessFinish();
+            // Bloqueamos rápido para leer los números de forma segura
+            synchronized (scheduler.lock) {
+                totales = scheduler.getFinishedQueue().getLen();
+                exitosos = scheduler.getSuccessFinish();
+            }
 
+            // Ya soltamos el candado, ahora podemos hacer matemáticas e interfaz en paz
             if (totales > 0) {
                 barraProgreso.setMaximum(totales);
                 barraProgreso.setValue(exitosos);
-
-                // Calculamos porcentaje para el texto
                 int porcentaje = (int) ((exitosos * 100.0f) / totales);
                 barraProgreso.setString("Exito: " + porcentaje + "% (" + exitosos + "/" + totales + ")");
                 barraProgreso.repaint();
@@ -593,6 +614,7 @@ public class Dashboard extends javax.swing.JFrame {
 
     // 2. Actualizar el Reloj y el CPU
 // 1. Método para actualizar la Tabla de Listos (jTable1)
+    // 1. Método para actualizar la Tabla de Listos (jTable1)
     public void updateReadyQueue(com.mycompany.sisoperativos.logic.Queue colaListos) {
         SwingUtilities.invokeLater(() -> {
             // Obtenemos el modelo de la tabla 1
@@ -600,95 +622,108 @@ public class Dashboard extends javax.swing.JFrame {
             modelo.setRowCount(0); // Esto borra las filas anteriores para no duplicar
 
             if (colaListos != null) {
-                // Empezamos desde el primero de la fila
-                com.mycompany.sisoperativos.logic.PCB aux = colaListos.peek();
+                // ¡EL SECRETO ESTÁ AQUÍ! 
+                // Frenamos el reloj de simulación solo una fracción de segundo mientras leemos la fila
+                synchronized (scheduler.lock) {
 
-                // Recorremos la cola y vamos agregando filas
-                while (aux != null) {
-                    modelo.addRow(new Object[]{
-                        aux.getId(),
-                        aux.getDurationR(),
-                        aux.getPriority(),
-                        aux.getDeadlineR()
-                    });
-                    aux = aux.getNext(); // Pasamos al siguiente
-                }
+                    // Empezamos desde el primero de la fila
+                    com.mycompany.sisoperativos.logic.PCB aux = colaListos.peek();
+
+                    // Recorremos la cola y vamos agregando filas de forma segura
+                    while (aux != null) {
+                        modelo.addRow(new Object[]{
+                            aux.getId(),
+                            aux.getDurationR(), // O el nombre de tu getter para CPU restante
+                            aux.getPriority(),
+                            aux.getDeadlineR() // O el getter para Deadline
+                        });
+
+                        // Avanzamos al siguiente
+                        aux = aux.getNext();
+                    }
+                } // ¡Listo! Soltamos el candado y el reloj sigue corriendo.
             }
         });
     }
 
-    // 2. Método para actualizar la Tabla de Bloqueados (jTable2)
     public void updateBlockedQueue(com.mycompany.sisoperativos.logic.Queue colaBloqueados) {
         SwingUtilities.invokeLater(() -> {
-            // Obtenemos el modelo de la tabla 2
             DefaultTableModel modelo = (DefaultTableModel) tablaBloqueados.getModel();
             modelo.setRowCount(0);
-
             if (colaBloqueados != null) {
-                com.mycompany.sisoperativos.logic.PCB aux = colaBloqueados.peek();
-                while (aux != null) {
-                    modelo.addRow(new Object[]{
-                        aux.getId(),
-                        aux.getDurationR(),
-                        aux.getPriority(),
-                        aux.getDeadlineR()
-                    });
-                    aux = aux.getNext();
-                }
+                synchronized (scheduler.lock) {
+
+                    // Empezamos desde el primero de la fila
+                    com.mycompany.sisoperativos.logic.PCB aux = colaBloqueados.peek();
+
+                    // Recorremos la cola y vamos agregando filas de forma segura
+                    while (aux != null) {
+                        modelo.addRow(new Object[]{
+                            aux.getId(),
+                            aux.getDurationR(), // O el nombre de tu getter para CPU restante
+                            aux.getPriority(),
+                            aux.getDeadlineR() // O el getter para Deadline
+                        });
+
+                        // Avanzamos al siguiente
+                        aux = aux.getNext();
+                    }
+                } // ¡Listo! Soltamos el candado y el reloj sigue corriendo.
             }
         });
     }
 
-    // Método para actualizar la Tabla de Finalizados (jTable nueva)
     public void updateFinishedQueue(com.mycompany.sisoperativos.logic.Queue colaFinalizados) {
         SwingUtilities.invokeLater(() -> {
-            // 1. Verificamos que la tabla exista para evitar errores
             if (tablaSalida == null) {
                 System.err.println("Advertencia: tablaFinalizados no existe en la interfaz.");
                 return;
             }
 
-            // 2. Obtenemos el modelo de la tabla y la limpiamos
             DefaultTableModel modelo = (DefaultTableModel) tablaSalida.getModel();
-            modelo.setRowCount(0); // Esto borra las filas anteriores para no duplicar datos
+            modelo.setRowCount(0); // Limpiamos la tabla
 
-            // 3. Recorremos la cola de finalizados si no está vacía
             if (colaFinalizados != null) {
-                com.mycompany.sisoperativos.logic.PCB aux = colaFinalizados.peek();
 
-                while (aux != null) {
-                    // Agregamos una nueva fila por cada proceso terminado
-                    modelo.addRow(new Object[]{
-                        aux.getId(),
-                        aux.getDurationR(), // Si terminó bien será 0. Si murió por deadline, será > 0
-                        aux.getPriority(),
-                        aux.getDeadlineR()
-                    });
+                // ¡CERRAMOS EL CANDADO ANTES DE RECORRER LA COLA!
+                synchronized (scheduler.lock) {
+                    com.mycompany.sisoperativos.logic.PCB aux = colaFinalizados.peek();
 
-                    // Pasamos al siguiente nodo en la cola
-                    aux = aux.getNext();
-                }
+                    while (aux != null) {
+                        modelo.addRow(new Object[]{
+                            aux.getId(),
+                            aux.getDurationR(),
+                            aux.getPriority(),
+                            aux.getDeadlineR()
+                        });
+                        aux = aux.getNext();
+                    }
+                } // ¡SOLTAMOS EL CANDADO! El simulador puede continuar.
             }
+
+            // Actualizamos la barra de progreso al final
             actualizarBarraGlobal();
         });
     }
 
     // 3. Método para actualizar el CPU (Las etiquetas del medio)
-    public void updateStatus(int ciclo, com.mycompany.sisoperativos.logic.PCB current) {
+public void updateStatus(int ciclos, com.mycompany.sisoperativos.logic.PCB procesoActual) {
         SwingUtilities.invokeLater(() -> {
-            lblReloj.setText("Ciclo Actual: " + ciclo);
-
-            if (current != null) {
-                // NOTA: Cambia jLabel1, jLabel2, jLabel3 por los nombres de tus textos celestes
-                txtCpuId.setText("ID Ejecutando: " + current.getId());
-                txtCpuRem.setText("Tiempo Restante: " + current.getDurationR());
-                txtCpuPriority.setText("Prioridad: " + current.getPriority());
-                txtCpuDL.setText("Deadline: " + current.getDeadlineR());
-
-            } else {
-                txtCpuId.setText("SO CAMBIO DE CONTEXTO");
-                txtCpuRem.setText("-");
-                txtCpuPriority.setText("-");
+            lblReloj.setText("Ciclos: " + ciclos);
+            
+            // Leemos el proceso actual de forma segura
+            synchronized (scheduler.lock) {
+                if (procesoActual != null) {
+                    txtCpuId.setText("ID: " + procesoActual.getId());
+                    txtCpuRem.setText("Rem: " + procesoActual.getDurationR());
+                    txtCpuPriority.setText("Pri: " + procesoActual.getPriority());
+                    txtCpuDL.setText("DL: " + procesoActual.getDeadlineR());
+                } else {
+                    txtCpuId.setText("ID: Libre");
+                    txtCpuRem.setText("Rem: -");
+                    txtCpuPriority.setText("Pri: -");
+                    txtCpuDL.setText("DL: -");
+                }
             }
         });
     }
