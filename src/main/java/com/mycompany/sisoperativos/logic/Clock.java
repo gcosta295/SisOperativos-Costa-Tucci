@@ -75,7 +75,6 @@ public class Clock implements Runnable {
                 while (io!=null){
                     if (io.getPcbProcess()==null){
                         PCB pcb = io.getIOQueue().dequeue();
-                        System.out.println(pcb);
                         io.setPcbProcess(pcb);
                     }
                     io=io.getNext();
@@ -111,6 +110,7 @@ public class Clock implements Runnable {
                     gui.updateReadyQueue(scheduler.getReadyQueue());
                     gui.updateBlockedQueue(scheduler.getBlockedQueue());
                     gui.updateFinishedQueue(scheduler.getFinishedQueue());
+                    gui.updateIOQueue(scheduler.getIoQueue());
                 } else {
                     System.out.println("!!! ERROR: El reloj no tiene conexión con la ventana (gui es null)");
                 }
