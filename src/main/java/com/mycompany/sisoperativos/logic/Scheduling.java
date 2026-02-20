@@ -21,6 +21,7 @@ public class Scheduling {
     private PCB currentProcess;
     private Dashboard gui;
     private int ramSize;
+    private int successFinish;
 
     public Queue getIoQueue() {
         return ioQueue;
@@ -49,10 +50,15 @@ public class Scheduling {
         this.System_Quantum = 10;
         this.gui = gui;
         this.ramSize = 256;
+        this.successFinish=0;
     }
 
     public Queue getFinishedQueue() {
         return this.finishedQueue;
+    }
+
+    public int getSuccessFinish() {
+        return successFinish;
     }
 
     public void createScheduling(Queue oldQueue, String politic) {
@@ -108,6 +114,7 @@ public class Scheduling {
                 gui.log("Proceso " + currentProcess.getId() + " finalizado con ÉXITO.");
                 currentProcess.setState("Exit");
                 if (finishedQueue != null) {
+                    successFinish+=1;
                     finishedQueue.enqueueFIFO(currentProcess);
                 }
                 currentProcess = null; // Liberamos el CPU para el próximo ciclo
@@ -127,16 +134,16 @@ public class Scheduling {
                     boolean expulsar = false;
 
                     if ("RR".equals(this.politic) && currentProcess.getQuantum() >= 8) {
-                        System.out.println("!!! QUANTUM EXPIRED !!!");
+                        gui.log("!!! QUANTUM EXPIRED !!!");
                         expulsar = true;
                     } else if ("SRT".equals(this.politic) && nextInQueue.getDurationR() < currentProcess.getDurationR()) {
-                        System.out.println("!!! PREEMPTION (SRT) !!! ID " + nextInQueue.getId() + " es más corto.");
+                        gui.log("!!! PREEMPTION (SRT) !!! ID " + nextInQueue.getId() + " es más corto.");
                         expulsar = true;
                     } else if ("EDF".equals(this.politic) && nextInQueue.getDeadlineR() < currentProcess.getDeadlineR()) {
-                        System.out.println("!!! PREEMPTION (EDF) !!! ID " + nextInQueue.getId() + " es más urgente.");
+                        gui.log("!!! PREEMPTION (EDF) !!! ID " + nextInQueue.getId() + " es más urgente.");
                         expulsar = true;
                     } else if ("Priority".equals(this.politic) && nextInQueue.getPriority() > currentProcess.getPriority()) {
-                        System.out.println("!!! PREEMPTION (PRIORITY) !!! ID " + nextInQueue.getId() + " tiene más prioridad.");
+                        gui.log("!!! PREEMPTION (PRIORITY) !!! ID " + nextInQueue.getId() + " tiene más prioridad.");
                         expulsar = true;
                     }
 
