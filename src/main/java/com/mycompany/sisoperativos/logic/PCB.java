@@ -17,6 +17,7 @@ public class PCB {
     private PCB next;
     private int quantum;
     private int deadlineR;
+    private int duration;
     private int durationR;
     private String inputOutput;
     private int size;
@@ -43,6 +44,10 @@ public class PCB {
 
     public int getDeadlineR() {
         return deadlineR;
+    }
+
+    public int getDuration() {
+        return duration;
     }
 
     public int getDurationR() {
@@ -89,6 +94,10 @@ public class PCB {
         this.deadlineR = deadlineR;
     }
 
+    public void setDuration(int duration) {
+        this.duration = duration;
+    }
+
     public void setDurationR(int durationR) {
         this.durationR = durationR;
     }
@@ -118,6 +127,7 @@ public class PCB {
         this.next=null;
         this.quantum=0;
         this.deadlineR=0;
+        this.duration=0;
         this.durationR=0;
         this.size=0;
         this.inputOutput=null;
