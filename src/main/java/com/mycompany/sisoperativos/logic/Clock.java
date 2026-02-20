@@ -65,8 +65,7 @@ public class Clock implements Runnable {
                 System.out.println(">>> Reloj Tick: " + contadorCiclos);
 
                 scheduler.runExecutionCycle();
-                scheduler.checkAndPurgeDeadlines(scheduler.getReadyQueue());                
-                scheduler.checkAndPurgeDeadlines(scheduler.getBlockedQueue());                
+                scheduler.checkAndPurgeDeadlines();
                 if (contadorCiclos % 8 == 0){
                     Process process = new Process();
                     process.getPCB().setId(2);
