@@ -33,7 +33,9 @@ public class Dashboard extends javax.swing.JFrame {
 
         // 1. Inicializamos tu motor
         scheduler = new Scheduling(this);
-        scheduler.setPolitic("FIFO"); // O la política que quieras
+        scheduler.getReadyQueue().setName("ReadyQueue");
+        scheduler.getBlockedQueue().setName("BlockedQueue");
+        scheduler.setPolitic("FIFO"); 
         jComboBox1.setEnabled(false);
         tiempoReloj.setEnabled(false);
         random.setEnabled(false);
@@ -617,13 +619,10 @@ public class Dashboard extends javax.swing.JFrame {
         });
     }
 
-    // 2. Método para actualizar la Tabla de Bloqueados (jTable2)
     public void updateBlockedQueue(com.mycompany.sisoperativos.logic.Queue colaBloqueados) {
         SwingUtilities.invokeLater(() -> {
-            // Obtenemos el modelo de la tabla 2
             DefaultTableModel modelo = (DefaultTableModel) tablaBloqueados.getModel();
             modelo.setRowCount(0);
-
             if (colaBloqueados != null) {
                 com.mycompany.sisoperativos.logic.PCB aux = colaBloqueados.peek();
                 while (aux != null) {
@@ -639,33 +638,23 @@ public class Dashboard extends javax.swing.JFrame {
         });
     }
 
-    // Método para actualizar la Tabla de Finalizados (jTable nueva)
     public void updateFinishedQueue(com.mycompany.sisoperativos.logic.Queue colaFinalizados) {
         SwingUtilities.invokeLater(() -> {
-            // 1. Verificamos que la tabla exista para evitar errores
             if (tablaSalida == null) {
                 System.err.println("Advertencia: tablaFinalizados no existe en la interfaz.");
                 return;
             }
-
-            // 2. Obtenemos el modelo de la tabla y la limpiamos
             DefaultTableModel modelo = (DefaultTableModel) tablaSalida.getModel();
-            modelo.setRowCount(0); // Esto borra las filas anteriores para no duplicar datos
-
-            // 3. Recorremos la cola de finalizados si no está vacía
+            modelo.setRowCount(0); 
             if (colaFinalizados != null) {
                 com.mycompany.sisoperativos.logic.PCB aux = colaFinalizados.peek();
-
                 while (aux != null) {
-                    // Agregamos una nueva fila por cada proceso terminado
                     modelo.addRow(new Object[]{
                         aux.getId(),
-                        aux.getDurationR(), // Si terminó bien será 0. Si murió por deadline, será > 0
+                        aux.getDurationR(), 
                         aux.getPriority(),
                         aux.getDeadlineR()
                     });
-
-                    // Pasamos al siguiente nodo en la cola
                     aux = aux.getNext();
                 }
             }

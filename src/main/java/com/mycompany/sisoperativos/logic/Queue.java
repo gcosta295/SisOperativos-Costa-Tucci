@@ -277,6 +277,17 @@ public class Queue {
             this.lastIO = io;
         }
     }
+    
+    public InputOutput ioSercher(String name){
+        InputOutput temp = this.firstIO;
+        while (temp!=null){
+            if (temp.getName().equals(name)){
+                return temp;
+            }
+            temp=temp.getNext();
+        }
+        return null;
+    }
 
     public PCB extractById(int id) {
         if (this.firstP == null) {

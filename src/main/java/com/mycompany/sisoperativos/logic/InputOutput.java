@@ -137,11 +137,12 @@ public class InputOutput {
         }
     } 
     
-    public void ioChecker(PCB pcb){
+    public void ioChecker(PCB pcb, Queue queue){
         if (this.pcbProcess==null){
             this.pcbProcess=pcb;
         }else{
             this.IOQueue.enqueueFIFO(pcb);
+            queue.enqueueFIFO(pcb);
         }
     }
     

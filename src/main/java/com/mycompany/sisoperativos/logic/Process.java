@@ -58,6 +58,7 @@ public class Process {
            this.processName="Image Upload";
            this.PCB.setInputOutput("SD Memory");
            this.duration=20;
+           this.PCB.setDurationHope(20);
            this.deadLine=68;
            this.PCB.setSize(1);
         }else if ((id % 11 == 0)&&(flag)){
@@ -66,6 +67,7 @@ public class Process {
            this.processName="Temperature";
            this.PCB.setInputOutput("Thermometer");
            this.duration=12;
+           this.PCB.setDurationHope(12);
            this.deadLine=40;
            this.PCB.setSize(5);
         }else if ((id % 7 == 0)&&(flag)){
@@ -74,6 +76,7 @@ public class Process {
            this.processName="Location";
            this.PCB.setInputOutput("GNSS");
            this.duration=11;
+           this.PCB.setDurationHope(11);
            this.deadLine=38;
            this.PCB.setSize(8);
         }else if ((id % 5 == 0)&&(flag)){
@@ -81,6 +84,7 @@ public class Process {
            pcb.setPriority(4);
            this.processName="Telemetry";
            this.duration=10;
+           this.PCB.setDurationHope(10);
            this.deadLine=20;
            this.PCB.setSize(15);
         }else if ((id % 3 == 0)&&(flag)){
@@ -89,6 +93,7 @@ public class Process {
            this.processName="Beacon Radio";
            this.PCB.setInputOutput("Receptor");
            this.duration=6;
+           this.PCB.setDurationHope(6);
            this.deadLine=22;
            this.PCB.setSize(15);
         }else if (flag){
@@ -96,6 +101,7 @@ public class Process {
            pcb.setPriority(6);
            this.processName="System Health";
            this.duration=2;
+           this.PCB.setDurationHope(2);
            this.deadLine=8;
            this.PCB.setSize(60);
         }
@@ -127,6 +133,7 @@ public class Process {
                     this.processName="Update Software";
                     this.PCB.setInputOutput("Sysadmin");
                     this.duration=40;
+                    this.PCB.setDurationHope(40);
                     this.deadLine=104;
                     this.PCB.setSize(150);
                     this.PCB.setPriority(4);
@@ -136,6 +143,7 @@ public class Process {
                     this.processName="Message";
                     this.PCB.setInputOutput("Receptor");
                     this.duration=80;
+                    this.PCB.setDurationHope(80);
                     this.deadLine=204;
                     this.PCB.setSize(15);
                     this.PCB.setPriority(4);
@@ -148,6 +156,7 @@ public class Process {
                     this.processName="Collision avoidance";
                     this.PCB.setInputOutput("Sensor");
                     this.duration=10;
+                    this.PCB.setDurationHope(10);
                     this.deadLine=38;
                     this.PCB.setSize(80);
                     this.PCB.setPriority(7);
@@ -157,6 +166,7 @@ public class Process {
                     this.processName="Full Memory";
                     this.PCB.setInputOutput("SD memory");
                     this.duration=60;
+                    this.PCB.setDurationHope(60);
                     this.deadLine=156;
                     this.PCB.setSize(1);
                     this.PCB.setPriority(7);
@@ -167,6 +177,7 @@ public class Process {
                     this.processName="Radiation Sensor";
                     this.PCB.setInputOutput("Radiation Detector");
                     this.duration=70;
+                    this.PCB.setDurationHope(70);
                     this.deadLine=172;
                     this.PCB.setSize(10);
                     this.PCB.setPriority(7);
@@ -176,6 +187,7 @@ public class Process {
                     this.processName="Charging Cut";
                     this.PCB.setInputOutput("Sysadmin");
                     this.duration=20;
+                    this.PCB.setDurationHope(20);
                     this.deadLine=64;
                     this.PCB.setSize(150);
                     this.PCB.setPriority(7);
