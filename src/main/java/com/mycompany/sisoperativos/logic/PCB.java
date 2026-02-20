@@ -18,6 +18,7 @@ public class PCB {
     private int quantum;
     private int deadlineR;
     private int durationR;
+    private String inputOutput;
     private int size;
 
     public int getId() {
@@ -60,6 +61,10 @@ public class PCB {
         return size;
     }
 
+    public String getInputOutput() {
+        return inputOutput;
+    }
+
     public void setId(int id) {
         this.id = id;
     }
@@ -99,6 +104,10 @@ public class PCB {
     public void setSize(int size) {
         this.size = size;
     }
+
+    public void setInputOutput(String inputOutput) {
+        this.inputOutput = inputOutput;
+    }
          
     public PCB() {
         long time = System.nanoTime();
@@ -111,6 +120,7 @@ public class PCB {
         this.deadlineR=0;
         this.durationR=0;
         this.size=0;
+        this.inputOutput=null;
     }
     
     

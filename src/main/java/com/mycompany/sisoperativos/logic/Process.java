@@ -12,7 +12,6 @@ public class Process {
     private PCB PCB;
     private String processName;
     private int duration;
-    private String inputOutput;
     private int deadLine;
 
     public PCB getPCB() {
@@ -27,10 +26,6 @@ public class Process {
         return duration;
     }
 
-    public String getInputOutput() {
-        return inputOutput;
-    }
-
     public int getDeadLine() {
         return deadLine;
     }
@@ -43,10 +38,6 @@ public class Process {
         this.duration = duration;
     }
 
-    public void setInputOutput(String inputOutput) {
-        this.inputOutput = inputOutput;
-    }
-
     public void setDeadLine(int deadLine) {
         this.deadLine = deadLine;
     }
@@ -55,7 +46,6 @@ public class Process {
         this.PCB=new PCB();
         this.duration=0;
         this.deadLine=0;
-        this.inputOutput=null;
         this.processName=null;
     }
     
@@ -66,7 +56,7 @@ public class Process {
            flag = false;
            pcb.setPriority(1);
            this.processName="Image Upload";
-           this.inputOutput="SD Memory";
+           this.PCB.setInputOutput("SD Memory");
            this.duration=20;
            this.deadLine=68;
            this.PCB.setSize(1);
@@ -74,7 +64,7 @@ public class Process {
            flag = false;
            pcb.setPriority(2);
            this.processName="Temperature";
-           this.inputOutput="Thermometer";
+           this.PCB.setInputOutput("Thermometer");
            this.duration=12;
            this.deadLine=40;
            this.PCB.setSize(5);
@@ -82,7 +72,7 @@ public class Process {
            flag = false;
            pcb.setPriority(3);
            this.processName="Location";
-           this.inputOutput="GNSS";
+           this.PCB.setInputOutput("GNSS");
            this.duration=11;
            this.deadLine=38;
            this.PCB.setSize(8);
@@ -97,7 +87,7 @@ public class Process {
            flag = false;
            pcb.setPriority(5);
            this.processName="Beacon Radio";
-           this.inputOutput="Receptor";
+           this.PCB.setInputOutput("Receptor");
            this.duration=6;
            this.deadLine=22;
            this.PCB.setSize(15);
@@ -135,7 +125,7 @@ public class Process {
                 if ((id % 3 == 0)&&(flag)){
                     flag = false;
                     this.processName="Update Software";
-                    this.inputOutput="Sysadmin";
+                    this.PCB.setInputOutput("Sysadmin");
                     this.duration=40;
                     this.deadLine=104;
                     this.PCB.setSize(150);
@@ -144,7 +134,7 @@ public class Process {
                 if (flag){
                     flag = false;
                     this.processName="Message";
-                    this.inputOutput="Receptor";
+                    this.PCB.setInputOutput("Receptor");
                     this.duration=80;
                     this.deadLine=204;
                     this.PCB.setSize(15);
@@ -156,7 +146,7 @@ public class Process {
                 if ((id % 3 == 0)&&(flag)){
                     flag = false;
                     this.processName="Collision avoidance";
-                    this.inputOutput="Sensor";
+                    this.PCB.setInputOutput("Sensor");
                     this.duration=10;
                     this.deadLine=38;
                     this.PCB.setSize(80);
@@ -165,7 +155,7 @@ public class Process {
                 if ((id % 5 == 0)&&(flag)){
                     flag = false;
                     this.processName="Full Memory";
-                    this.inputOutput="SD memory";
+                    this.PCB.setInputOutput("SD memory");
                     this.duration=60;
                     this.deadLine=156;
                     this.PCB.setSize(1);
@@ -175,7 +165,7 @@ public class Process {
                 if ((id % 7 == 0)&&(flag)){
                     flag = false;
                     this.processName="Radiation Sensor";
-                    this.inputOutput="Radiation Detector";
+                    this.PCB.setInputOutput("Radiation Detector");
                     this.duration=70;
                     this.deadLine=172;
                     this.PCB.setSize(10);
@@ -184,7 +174,7 @@ public class Process {
                 if (flag){
                     flag = false;
                     this.processName="Charging Cut";
-                    this.inputOutput="Sysadmin";
+                    this.PCB.setInputOutput("Sysadmin");
                     this.duration=20;
                     this.deadLine=64;
                     this.PCB.setSize(150);
@@ -197,7 +187,7 @@ public class Process {
     }
     
     public void enqueue(String politic, Queue newQueue, PCB pcb){
-        if (politic == "FCFS" || politic == "RR"){
+        if (politic == "FIFO" || politic == "RR"){
             newQueue.enqueueFIFO(pcb);
         }else if (politic == "SRT"){
             newQueue.enqueueByRemainingTime(pcb);
