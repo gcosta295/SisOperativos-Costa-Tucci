@@ -66,7 +66,6 @@ public class Dashboard extends javax.swing.JFrame {
         }
         // 3. ¡IMPORTANTE! Creamos el reloj y le pasamos "this" (esta ventana)
         simClock = new Clock(1000, scheduler, this);
-        simClock.setScheduler(scheduler);
     }
 
     /**

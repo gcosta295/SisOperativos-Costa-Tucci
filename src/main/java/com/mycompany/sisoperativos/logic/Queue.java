@@ -15,7 +15,7 @@ public class Queue {
     private PCB lastP;
     private InputOutput firstIO;
     private InputOutput lastIO;
-    private int len;                                        //Revisar
+    private int len;
     private int capacity;
 
     public String getName() {
@@ -88,15 +88,20 @@ public class Queue {
         if (this.firstP == null) {
             return null;
         }
-        PCB target = this.firstP; 
-        this.firstP = this.firstP.getNext(); 
+
+        PCB target = this.firstP; // El que va a salir
+        this.firstP = this.firstP.getNext(); // El segundo pasa a ser primero
+
         if (this.firstP != null) {
-            this.firstP.setBefore(null); 
+            this.firstP.setBefore(null); // El nuevo primero no tiene a nadie antes
         } else {
-            this.lastP = null;
+            this.lastP = null; // Si no hay nadie más, la cola está vacía
         }
+
+        // LIMPIEZA CRÍTICA: Desconectar el proceso extraído de la cadena
         target.setNext(null);
         target.setBefore(null);
+
         this.len--;
         return target;
     }
@@ -262,7 +267,6 @@ public class Queue {
     }
 
     public void enqueueIO(InputOutput io) {
-        this.len = +1;
         if (this.firstIO == null) {
             this.firstIO = io;
             this.lastIO = io;
@@ -276,7 +280,7 @@ public class Queue {
         InputOutput checker = this.firstIO;
         boolean flag = true;
         while (flag){
-            if (checker.getName().equals(ioName)){
+            if (checker.getName() == ioName){
                 flag=false;
             }else{
                 checker=checker.getNext();
