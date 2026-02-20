@@ -83,74 +83,64 @@ public class Scheduling {
 
     public void runExecutionCycle() {
         // 1. Cargar proceso si el CPU está vacío
-        // 1. Reducir Deadline de los que están en la cola (El tiempo no perdona)
-        PCB temp = readyQueue.peek();
-        // Suponiendo que tienes un método para recorrer la cola o 
-        // puedes restar el tiempo a todos los procesos en espera.
-        updateQueueDeadlines();
         if (currentProcess == null) {
             currentProcess = readyQueue.dequeue();
             if (currentProcess != null) {
                 currentProcess.setQuantum(0);
+            } else {
+                return; // Si no hay nada en la cola, no hacemos nada este ciclo.
             }
         }
 
+        // 2. Si hay un proceso en el CPU, lo ejecutamos un ciclo
         if (currentProcess != null) {
             // Ejecución estándar
             currentProcess.setDurationR(currentProcess.getDurationR() - 1);
             currentProcess.setQuantum(currentProcess.getQuantum() + 1);
             currentProcess.setDeadlineR(currentProcess.getDeadlineR() - 1);
 
-            gui.log("Executing ID: " + currentProcess.getId() + " [Rem: " + currentProcess.getDurationR() + "]" + " [Deadline: " + currentProcess.getDeadlineR() + "]");
-
-            // 2. ¿Terminó?
+            // 3. ¿Terminó con éxito?
             if (currentProcess.getDurationR() <= 0) {
-                System.out.println("Proceso " + currentProcess.getId() + " finalizado con ÉXITO.");
+                gui.log("Proceso " + currentProcess.getId() + " finalizado con ÉXITO.");
                 currentProcess.setState("Exit");
-                finishedQueue.enqueueFIFO(currentProcess);
-                currentProcess = null;
-            } // 3. Revisamos si se le acabó el deadline estando en el CPU
+                if (finishedQueue != null) {
+                    finishedQueue.enqueueFIFO(currentProcess);
+                }
+                currentProcess = null; // Liberamos el CPU para el próximo ciclo
+            } // 4. ¿Se le acabó el deadline estando en el CPU?
             else if (currentProcess.getDeadlineR() <= 0) {
-                System.out.println("¡ALERTA! Proceso " + currentProcess.getId() + " KILLED EN CPU (Deadline Vencido).");
+                gui.log("¡ALERTA! Proceso " + currentProcess.getId() + " TERMINADO ANÓMALAMENTE (Deadline Vencido).");
                 currentProcess.setState("Aborted");
-                finishedQueue.enqueueFIFO(currentProcess);
+                if (finishedQueue != null) {
+                    finishedQueue.enqueueFIFO(currentProcess);
+                }
                 currentProcess = null; // Lo sacamos del CPU a la fuerza
-            }
+            } // 5. LÓGICA DE PREEMPCIÓN (Solo revisamos si el proceso sigue vivo en el CPU)
+            else {
+                PCB nextInQueue = readyQueue.peek(); // Asumo que peek() y getFirstP() hacen lo mismo.
 
-            // 3. LÓGICA DE PREEMPCIÓN (REALISMO ESTRICTO)
-            PCB nextInQueue = readyQueue.getFirstP(); // Solo miramos el primero sin sacarlo
+                if (nextInQueue != null) {
+                    boolean expulsar = false;
 
-            if (nextInQueue != null) {
-                boolean expulsar = false;
-
-                if ("RR".equals(this.politic) && currentProcess.getQuantum() >= 4) {
-                    System.out.println("!!! QUANTUM EXPIRED !!!");
-                    expulsar = true;
-                } else if ("SRT".equals(this.politic) && nextInQueue.getDurationR() < currentProcess.getDurationR()) {
-                    System.out.println("!!! PREEMPTION (SRT) !!! ID " + nextInQueue.getId() + " es más corto.");
-                    expulsar = true;
-                } else if ("EDF".equals(this.politic) && nextInQueue.getDeadlineR() < currentProcess.getDeadlineR()) {
-                    System.out.println("!!! PREEMPTION (EDF) !!! ID " + nextInQueue.getId() + " es más urgente.");
-                    expulsar = true;
-                } else if ("Priority".equals(this.politic) && nextInQueue.getPriority() > currentProcess.getPriority()) {
-                    System.out.println("!!! PREEMPTION (PRIORITY) !!! ID " + nextInQueue.getId() + " tiene más prioridad.");
-                    expulsar = true;
-                } else if ("Priority".equals(this.politic)) {
-                    // Si el que espera (nextInQueue) tiene un número de prioridad MÁS ALTO 
-                    // que el que está corriendo, lo expulsamos.
-                    if (nextInQueue.getPriority() > currentProcess.getPriority()) {
-                        System.out.println("!!! PREEMPCIÓN POR PRIORIDAD !!!");
-                        System.out.println("ID " + nextInQueue.getId() + " (Prio: " + nextInQueue.getPriority()
-                                + ") expulsa a ID " + currentProcess.getId() + " (Prio: " + currentProcess.getPriority() + ")");
-
+                    if ("RR".equals(this.politic) && currentProcess.getQuantum() >= 4) {
+                        System.out.println("!!! QUANTUM EXPIRED !!!");
+                        expulsar = true;
+                    } else if ("SRT".equals(this.politic) && nextInQueue.getDurationR() < currentProcess.getDurationR()) {
+                        System.out.println("!!! PREEMPTION (SRT) !!! ID " + nextInQueue.getId() + " es más corto.");
+                        expulsar = true;
+                    } else if ("EDF".equals(this.politic) && nextInQueue.getDeadlineR() < currentProcess.getDeadlineR()) {
+                        System.out.println("!!! PREEMPTION (EDF) !!! ID " + nextInQueue.getId() + " es más urgente.");
+                        expulsar = true;
+                    } else if ("Priority".equals(this.politic) && nextInQueue.getPriority() > currentProcess.getPriority()) {
+                        System.out.println("!!! PREEMPTION (PRIORITY) !!! ID " + nextInQueue.getId() + " tiene más prioridad.");
                         expulsar = true;
                     }
-                }
 
-                if (expulsar) {
-                    currentProcess.setQuantum(0);
-                    readyQueue.enqueueFIFO(currentProcess); // El actual vuelve a la cola
-                    currentProcess = null; // El CPU queda libre para el "retador" en el ciclo siguiente
+                    if (expulsar) {
+                        currentProcess.setQuantum(0);
+                        readyQueue.enqueueFIFO(currentProcess); // El actual vuelve a la cola
+                        currentProcess = null; // El CPU queda libre para el "retador" en el ciclo siguiente
+                    }
                 }
             }
         }
@@ -234,7 +224,7 @@ public class Scheduling {
 
                 // ¿Se le acabó el tiempo antes de terminar su ráfaga?
                 if (aux.getDeadlineR() <= 0 && aux.getDurationR() > 0) {
-                    System.out.println("¡ALERTA! Proceso " + aux.getId() + " TERMINADO ANÓMALAMENTE (Deadline Vencido).");
+                    gui.log("¡ALERTA! Proceso " + aux.getId() + " TERMINADO ANÓMALAMENTE (Deadline Vencido).");
                     aux.setState("Aborted"); // Lo marcamos como abortado
 
                     // Lo mandamos al cementerio de finalizados
