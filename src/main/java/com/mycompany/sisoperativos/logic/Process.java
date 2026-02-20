@@ -96,7 +96,7 @@ public class Process {
            pcb.setPriority(6);
            this.processName="System Health";
            this.duration=2;
-           this.deadLine=4;
+           this.deadLine=8;
            this.PCB.setSize(60);
         }
         if ((id % 107==0) || (id % 113==0) || (id % 139==0) || (id % 101==0) || (id % 127==0)){
