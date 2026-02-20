@@ -66,7 +66,32 @@ public class Clock implements Runnable {
 
                 scheduler.runExecutionCycle();
                 scheduler.checkAndPurgeDeadlines();
-                // 2. Comprobar si la ventana existe antes de actualizar
+                if (contadorCiclos % 8 == 0){
+                    Process process = new Process();
+                    process.getPCB().setId(2);
+                    process.periodicProcess(process.getPCB(), scheduler.getReadyQueue(), scheduler.getPolitic());
+                }if (contadorCiclos % 12 == 0){
+                    Process process = new Process();
+                    process.getPCB().setId(3);
+                    process.periodicProcess(process.getPCB(), scheduler.getReadyQueue(), scheduler.getPolitic());
+                }if (contadorCiclos % 18 == 0){
+                    Process process = new Process();
+                    process.getPCB().setId(5);
+                    process.periodicProcess(process.getPCB(), scheduler.getReadyQueue(), scheduler.getPolitic());
+                }if (contadorCiclos % 40 == 0){
+                    Process process = new Process();
+                    process.getPCB().setId(7);
+                    process.periodicProcess(process.getPCB(), scheduler.getReadyQueue(), scheduler.getPolitic());
+                }if (contadorCiclos % 80 == 0){
+                    Process process = new Process();
+                    process.getPCB().setId(11);
+                    process.periodicProcess(process.getPCB(), scheduler.getReadyQueue(), scheduler.getPolitic());
+                }if (contadorCiclos % 200 == 0){
+                    Process process = new Process();
+                    process.getPCB().setId(13);
+                    process.periodicProcess(process.getPCB(), scheduler.getReadyQueue(), scheduler.getPolitic());
+                }
+                //2. Comprobar si la ventana existe antes de actualizar
                 if (gui != null) {
                     gui.updateStatus(contadorCiclos, scheduler.getCurrentProcess());
                     gui.updateReadyQueue(scheduler.getReadyQueue());
