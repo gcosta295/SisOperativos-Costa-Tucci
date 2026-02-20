@@ -33,6 +33,9 @@ public class Dashboard extends javax.swing.JFrame {
 
         // 1. Inicializamos tu motor
         scheduler = new Scheduling(this);
+        scheduler.getReadyQueue().setName("ReadyQueue");
+        scheduler.getBlockedQueue().setName("BlockedQueue");
+        scheduler.getIoQueue().setName("IoQueue");
         scheduler.setPolitic("FIFO"); // O la política que quieras
 
         int indexIO = 6;
