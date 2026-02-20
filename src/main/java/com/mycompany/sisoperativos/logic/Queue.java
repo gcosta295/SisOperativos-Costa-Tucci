@@ -15,7 +15,7 @@ public class Queue {
     private PCB lastP;
     private InputOutput firstIO;
     private InputOutput lastIO;
-    private int len;                                        //Revisar
+    private int len;
     private int capacity;
 
     public String getName() {
@@ -88,15 +88,20 @@ public class Queue {
         if (this.firstP == null) {
             return null;
         }
-        PCB target = this.firstP; 
-        this.firstP = this.firstP.getNext(); 
+
+        PCB target = this.firstP; // El que va a salir
+        this.firstP = this.firstP.getNext(); // El segundo pasa a ser primero
+
         if (this.firstP != null) {
-            this.firstP.setBefore(null); 
+            this.firstP.setBefore(null); // El nuevo primero no tiene a nadie antes
         } else {
-            this.lastP = null;
+            this.lastP = null; // Si no hay nadie más, la cola está vacía
         }
+
+        // LIMPIEZA CRÍTICA: Desconectar el proceso extraído de la cadena
         target.setNext(null);
         target.setBefore(null);
+
         this.len--;
         return target;
     }
@@ -204,30 +209,24 @@ public class Queue {
         len = +1; // Increment queue size
     }
 
-    public void enqueueByPriority(PCB newNode) { //Shortest time remaining (the same as EDF but with duration)
-        // Case 1: The queue is empty
-
+    public void enqueueByPriority(PCB newNode) {
         if (firstP == null) {
             firstP = newNode;
             lastP = newNode;
             newNode.setNext(null);
             newNode.setBefore(null);
-        } // Case 2: The new process has the shortest deadline (New Head)
-        else if (newNode.getPriority() <= firstP.getPriority()) {
-            firstP.setNext(newNode);
-            newNode.setBefore(firstP);
-        } // Case 3: Find the correct position in the middle or at the end
+        }
+        else if (newNode.getPriority() >= firstP.getPriority()) {
+            firstP.setBefore(newNode);
+            newNode.setNext(firstP);
+        }
         else {
             PCB current = firstP;
-
-            // Traverse the list until finding the correct spot
-            while (current.getNext() != null && current.getNext().getPriority() < newNode.getPriority()) {
+            while (current.getNext() != null && current.getNext().getPriority() > newNode.getPriority()) {
                 current = current.getNext();
             }
-
-            // Insert newNode after 'current'
-            newNode.setNext(current.getNext());
             newNode.setBefore(current);
+            newNode.setNext(current.getNext());
 
             if (current.getNext() != null) {
                 // Link the following node back to the new node
@@ -262,7 +261,6 @@ public class Queue {
     }
 
     public void enqueueIO(InputOutput io) {
-        this.len = +1;
         if (this.firstIO == null) {
             this.firstIO = io;
             this.lastIO = io;
@@ -270,19 +268,6 @@ public class Queue {
             this.lastIO.setNext(io);
             this.lastIO = io;
         }
-    }
-    
-    public InputOutput serchByName(String ioName){
-        InputOutput checker = this.firstIO;
-        boolean flag = true;
-        while (flag){
-            if (checker.getName().equals(ioName)){
-                flag=false;
-            }else{
-                checker=checker.getNext();
-            }
-        }
-        return checker;
     }
 
     public PCB extractById(int id) {

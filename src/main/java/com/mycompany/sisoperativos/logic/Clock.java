@@ -14,9 +14,9 @@ public class Clock implements Runnable {
 //Se agrega el "Runnable" a la clase del reloj para que sea capaz de poder correr en un hilo nuevo
 
     private int contadorCiclos = 0; //Siempre el reloj arranca en 0
-    private volatile int duracionCicloMs; // Tiempo en milisegundos que dura cada ciclo
+    private int duracionCicloMs; // Tiempo en milisegundos que dura cada ciclo
     private boolean encendido = true;
-    private Scheduling scheduler;
+    private final Scheduling scheduler;
     private Dashboard gui;
 
     public Clock(int duracionInicial, Scheduling scheduler, Dashboard gui) {
@@ -54,10 +54,6 @@ public class Clock implements Runnable {
         this.encendido = encendido;
     }
 
-    public void setScheduler(Scheduling scheduler) {
-        this.scheduler = scheduler;
-    }
-
     @Override
     public void run() {
         while (true) {
@@ -68,17 +64,8 @@ public class Clock implements Runnable {
                 // 1. Imprimir en consola para saber si el reloj sigue vivo
                 System.out.println(">>> Reloj Tick: " + contadorCiclos);
 
-                this.setScheduler(scheduler.runExecutionCycle());
-                scheduler.checkAndPurgeDeadlines(scheduler.getReadyQueue());                
-                scheduler.checkAndPurgeDeadlines(scheduler.getBlockedQueue());
-                InputOutput io = scheduler.getIoQueue().getFirstIO();
-                while (io!=null){
-                    if (io.getPcbProcess()==null){
-                        PCB pcb = io.getIOQueue().dequeue();
-                        io.setPcbProcess(pcb);
-                    }
-                    io=io.getNext();
-                }
+                scheduler.runExecutionCycle();
+                scheduler.checkAndPurgeDeadlines();
                 if (contadorCiclos % 8 == 0){
                     Process process = new Process();
                     process.getPCB().setId(2);
@@ -110,7 +97,6 @@ public class Clock implements Runnable {
                     gui.updateReadyQueue(scheduler.getReadyQueue());
                     gui.updateBlockedQueue(scheduler.getBlockedQueue());
                     gui.updateFinishedQueue(scheduler.getFinishedQueue());
-                    gui.updateIOQueue(scheduler.getIoQueue());
                 } else {
                     System.out.println("!!! ERROR: El reloj no tiene conexión con la ventana (gui es null)");
                 }

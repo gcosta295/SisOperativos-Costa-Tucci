@@ -81,30 +81,26 @@ public class Scheduling {
         this.readyQueue = newQueue;
     }
 
-    public Scheduling runExecutionCycle() {
+    public void runExecutionCycle() {
+        // 1. Cargar proceso si el CPU está vacío
         if (currentProcess == null) {
             currentProcess = readyQueue.dequeue();
             if (currentProcess != null) {
-                currentProcess.setQuantum(0);//evaluar utilidad de esta linea
+                currentProcess.setQuantum(0);
             } else {
-                return this; // Si no hay nada en la cola, no hacemos nada este ciclo.
+                return; // Si no hay nada en la cola, no hacemos nada este ciclo.
             }
         }
+
         // 2. Si hay un proceso en el CPU, lo ejecutamos un ciclo
         if (currentProcess != null) {
             // Ejecución estándar
             currentProcess.setDurationR(currentProcess.getDurationR() - 1);
             currentProcess.setQuantum(currentProcess.getQuantum() + 1);
             currentProcess.setDeadlineR(currentProcess.getDeadlineR() - 1);
-            if (currentProcess.getInputOutput()!=null){
-                InputOutput ioDevice = this.ioQueue.serchByName(currentProcess.getInputOutput());
-                if (ioDevice.getCounter()>=currentProcess.getQuantum()){
-                    this.ioQueue.serchByName(currentProcess.getInputOutput()).ioChecker(currentProcess);
-                    this.blockCurrentProcess();
-                }
-            }
+
             // 3. ¿Terminó con éxito?
-            if (currentProcess != null && currentProcess.getDurationR() <= 0 ) {
+            if (currentProcess.getDurationR() <= 0) {
                 gui.log("Proceso " + currentProcess.getId() + " finalizado con ÉXITO.");
                 currentProcess.setState("Exit");
                 if (finishedQueue != null) {
@@ -112,7 +108,7 @@ public class Scheduling {
                 }
                 currentProcess = null; // Liberamos el CPU para el próximo ciclo
             } // 4. ¿Se le acabó el deadline estando en el CPU?
-            else if (currentProcess != null && currentProcess.getDeadlineR() <= 0) {
+            else if (currentProcess.getDeadlineR() <= 0) {
                 gui.log("¡ALERTA! Proceso " + currentProcess.getId() + " TERMINADO ANÓMALAMENTE (Deadline Vencido).");
                 currentProcess.setState("Aborted");
                 if (finishedQueue != null) {
@@ -120,13 +116,13 @@ public class Scheduling {
                 }
                 currentProcess = null; // Lo sacamos del CPU a la fuerza
             } // 5. LÓGICA DE PREEMPCIÓN (Solo revisamos si el proceso sigue vivo en el CPU)
-            else if (currentProcess != null){
+            else {
                 PCB nextInQueue = readyQueue.peek(); // Asumo que peek() y getFirstP() hacen lo mismo.
 
                 if (nextInQueue != null) {
                     boolean expulsar = false;
 
-                    if ("RR".equals(this.politic) && currentProcess.getQuantum() >= 8) {
+                    if ("RR".equals(this.politic) && currentProcess.getQuantum() >= 4) {
                         System.out.println("!!! QUANTUM EXPIRED !!!");
                         expulsar = true;
                     } else if ("SRT".equals(this.politic) && nextInQueue.getDurationR() < currentProcess.getDurationR()) {
@@ -148,7 +144,6 @@ public class Scheduling {
                 }
             }
         }
-        return this;
     }
 
     public Queue getReadyQueue() {
@@ -213,52 +208,40 @@ public class Scheduling {
     }
 // Método para envejecer procesos y purgar los vencidos
 
-    public void checkAndPurgeDeadlines(Queue queue) {
-        if (queue != null && queue.getLastP()!= null) {
-            Queue sobrevivientes = new Queue();
-            PCB aux = queue.dequeue();
+    public void checkAndPurgeDeadlines() {
+        // 1. Revisamos si hay procesos en la cola de listos
+        if (readyQueue != null && readyQueue.peek() != null) {
+
+            Queue sobrevivientes = new Queue(); // Cola temporal
+
+            // Sacamos los procesos uno por uno (asumo que tienes un método dequeue() o sacar())
+            // Si tu método para sacar se llama diferente, cámbialo aquí:
+            PCB aux = readyQueue.dequeue();
+
             while (aux != null) {
+                // Restamos 1 al tiempo límite por el ciclo que acaba de pasar
                 aux.setDeadlineR(aux.getDeadlineR() - 1);
+
+                // ¿Se le acabó el tiempo antes de terminar su ráfaga?
                 if (aux.getDeadlineR() <= 0 && aux.getDurationR() > 0) {
                     gui.log("¡ALERTA! Proceso " + aux.getId() + " TERMINADO ANÓMALAMENTE (Deadline Vencido).");
-                    aux.setState("Aborted"); 
+                    aux.setState("Aborted"); // Lo marcamos como abortado
+
+                    // Lo mandamos al cementerio de finalizados
                     if (finishedQueue != null) {
                         finishedQueue.enqueueFIFO(aux);
                     }
                 } else {
+                    // Si sobrevive, lo metemos a la cola temporal
                     sobrevivientes.enqueueFIFO(aux);
                 }
-                aux = queue.dequeue();
+
+                // Sacamos el siguiente
+                aux = readyQueue.dequeue();
             }
-            if (queue.getName()=="ReadyQueue"){
-                this.readyQueue = sobrevivientes;
-                this.readyQueue.setName("ReadyQueue");
-            }if (queue.getName()=="BlockedQueue"){
-                this.blockedQueue = sobrevivientes;
-                this.blockedQueue.setName("BlockedQueue");
-            }
-        }
-    }
-    
-    public void checkAndPurgeIO (){
-        if (this.blockedQueue != null && this.blockedQueue.peek() != null) {
-            Queue sobrevivientes = new Queue();
-            PCB aux = this.blockedQueue.dequeue();
-            while (aux != null) {
-                InputOutput temp = this.ioQueue.getFirstIO();
-                while (temp != null){
-                    if (aux==temp.getPcbProcess()){
-                        aux.setDurationR(aux.getDurationR()- 1);
-                        if (aux.getDuration()-aux.getDurationR()==temp.getTesponseTime()){
-                            readyQueue.enqueueFIFO(aux);
-                        }else{
-                            blockedQueue.enqueueFIFO(aux);
-                        }
-                    }
-                temp = temp.getNext();
-                }
-            aux = blockedQueue.dequeue();
-            }
+
+            // Reemplazamos la cola vieja con los que sobrevivieron
+            this.readyQueue = sobrevivientes;
         }
     }
 }
