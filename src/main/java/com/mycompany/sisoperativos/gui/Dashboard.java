@@ -106,7 +106,7 @@ public class Dashboard extends javax.swing.JFrame {
         jComboBox1 = new javax.swing.JComboBox<>();
         jPanel4 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        tablaListos = new javax.swing.JTable();
+        tablaSusListos = new javax.swing.JTable();
         tiempoReloj = new javax.swing.JComboBox<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -289,7 +289,7 @@ public class Dashboard extends javax.swing.JFrame {
 
         jPanel4.setBackground(new java.awt.Color(129, 146, 255));
 
-        tablaListos.setModel(new javax.swing.table.DefaultTableModel(
+        tablaSusListos.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
                 {null, null, null, null},
@@ -300,7 +300,7 @@ public class Dashboard extends javax.swing.JFrame {
                 "ID", "CPU Restante", "Prioridad", "Deadline"
             }
         ));
-        jScrollPane1.setViewportView(tablaListos);
+        jScrollPane1.setViewportView(tablaSusListos);
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
@@ -437,7 +437,7 @@ public class Dashboard extends javax.swing.JFrame {
                         // Actualizamos la tabla
                         updateReadyQueue(scheduler.getReadyQueue());
 
-                    
+                        Thread.sleep(500);
 
                     } catch (Exception e) { // ¡ATRAPAMOS EL ERROR SILENCIOSO!
                         System.err.println("!!! ERROR FATAL creando el proceso " + i + " !!!");
@@ -555,7 +555,7 @@ public class Dashboard extends javax.swing.JFrame {
     public void updateReadyQueue(com.mycompany.sisoperativos.logic.Queue colaListos) {
         SwingUtilities.invokeLater(() -> {
             // Obtenemos el modelo de la tabla 1
-            DefaultTableModel modelo = (DefaultTableModel) tablaListos.getModel();
+            DefaultTableModel modelo = (DefaultTableModel) tablaSusListos.getModel();
             modelo.setRowCount(0); // Esto borra las filas anteriores para no duplicar
 
             if (colaListos != null) {
@@ -668,10 +668,10 @@ public class Dashboard extends javax.swing.JFrame {
     private javax.swing.JLabel lblReloj;
     private javax.swing.JButton random;
     private javax.swing.JTable tablaBloqueados;
-    private javax.swing.JTable tablaListos;
     private javax.swing.JTable tablaListos1;
     private javax.swing.JTable tablaSalida;
     private javax.swing.JPanel tablaSusBloqueados;
+    private javax.swing.JTable tablaSusListos;
     private javax.swing.JComboBox<String> tiempoReloj;
     private javax.swing.JTextArea txtConsola;
     private javax.swing.JLabel txtCpuDL;
