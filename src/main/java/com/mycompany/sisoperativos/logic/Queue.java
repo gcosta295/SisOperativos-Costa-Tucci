@@ -217,27 +217,35 @@ public class Queue {
             newNode.setBefore(null);
         }
         else if (newNode.getPriority() >= firstP.getPriority()) {
+            // El nuevo nodo va de primero
             firstP.setBefore(newNode);
             newNode.setNext(firstP);
+            newNode.setBefore(null); // Buena práctica: asegurarnos de que no haya nada antes
+            
+            firstP = newNode; // ¡CORRECCIÓN CRÍTICA! Actualizamos la cabeza de la fila
         }
         else {
             PCB current = firstP;
+            // Buscamos la posición correcta
             while (current.getNext() != null && current.getNext().getPriority() > newNode.getPriority()) {
                 current = current.getNext();
             }
+            
+            // Insertamos el nuevo nodo
             newNode.setBefore(current);
             newNode.setNext(current.getNext());
 
             if (current.getNext() != null) {
-                // Link the following node back to the new node
+                // Enlazamos el nodo siguiente de vuelta al nuevo nodo
                 current.getNext().setBefore(newNode);
             } else {
-                // If inserted at the end, update the Tail pointer
+                // Si lo insertamos al final, actualizamos el puntero lastP (Cola)
                 lastP = newNode;
             }
             current.setNext(newNode);
         }
-        len = +1; // Increment queue size
+        
+        len++; // ¡CORRECCIÓN! Ahora sí incrementa el tamaño en 1
     }
 
     public void decrementAllDeadlines() {
