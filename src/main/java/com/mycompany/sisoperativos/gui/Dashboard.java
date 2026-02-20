@@ -598,25 +598,6 @@ public class Dashboard extends javax.swing.JFrame {
             }
         });
     }
-    
-    public void updateIOQueue(com.mycompany.sisoperativos.logic.Queue colaIO) {
-        SwingUtilities.invokeLater(() -> {
-            DefaultTableModel modelo = (DefaultTableModel) tablaBloqueados.getModel();
-            modelo.setRowCount(0);
-
-            if (colaIO != null) {
-                com.mycompany.sisoperativos.logic.InputOutput aux = colaIO.getFirstIO();
-                while (aux != null) {
-                    modelo.addRow(new Object[]{
-                        aux.getIOQueue(),
-                        aux.getPcbProcess(),
-                        aux.isInUse(),
-                    });
-                    aux = aux.getNext();
-                }
-            }
-        });
-    }
 
     // Método para actualizar la Tabla de Finalizados (jTable nueva)
     public void updateFinishedQueue(com.mycompany.sisoperativos.logic.Queue colaFinalizados) {
