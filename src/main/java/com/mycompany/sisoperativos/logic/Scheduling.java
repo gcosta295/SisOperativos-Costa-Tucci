@@ -74,12 +74,10 @@ public class Scheduling {
             } else if ("Priority".equals(this.politic)) {
                 newQueue.enqueueByPriority(aux);
             } else {
-                // Para RR y FIFO usamos FIFO simple
                 newQueue.enqueueFIFO(aux);
             }
             aux = readyQueue.dequeue();
         }
-        // IMPORTANTE: Reemplazar la cola vieja con la nueva ya ordenada
         this.readyQueue = newQueue;
     }
 

@@ -347,29 +347,21 @@ public class Dashboard extends javax.swing.JFrame {
 
     private void randomActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_randomActionPerformed
         System.out.println("¡Botón presionado! Arrancando hilo generador...");
-
         Thread hiloGenerador = new Thread(new Runnable() {
             @Override
             public void run() {
                 for (int i = 0; i < 20; i++) {
                     try {
-                        // Intentamos crear el proceso
                         System.out.println(">>> Intentando crear proceso " + i + "...");
                         Process newP = new Process();
-
-                        // Intentamos configurarlo y encolarlo
                         newP.aperiodicProcess(false, scheduler.getReadyQueue(), scheduler.getPolitic());
                         System.out.println(">>> Proceso " + i + " encolado correctamente.");
-
-                        // Actualizamos la tabla
                         updateReadyQueue(scheduler.getReadyQueue());
-
                         Thread.sleep(500);
-
-                    } catch (Exception e) { // ¡ATRAPAMOS EL ERROR SILENCIOSO!
+                    } catch (Exception e) {
                         System.err.println("!!! ERROR FATAL creando el proceso " + i + " !!!");
-                        e.printStackTrace(); // Esto nos dirá la línea exacta del fallo
-                        break; // Abortamos el bucle para no lanzar 20 errores seguidos
+                        e.printStackTrace();
+                        break;
                     }
                 }
                 System.out.println("¡El hilo generador terminó!");
@@ -380,18 +372,11 @@ public class Dashboard extends javax.swing.JFrame {
     }//GEN-LAST:event_randomActionPerformed
 
     private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
-    // 1. Obtenemos el texto de la opción que el usuario acaba de seleccionar
         String politicaSeleccionada = (String) jComboBox1.getSelectedItem();
-        
-        // 2. Nos aseguramos de que el scheduler ya esté creado
         if (scheduler != null) {
-            // 3. ¡Cambiamos la política! Tu método setPolitic ya se encarga de reordenar la cola
             scheduler.setPolitic(politicaSeleccionada);
-            
-            // 4. Imprimimos el aviso en la consola de la interfaz
             log("--- POLÍTICA CAMBIADA A: " + politicaSeleccionada + " ---");
-            
-            // 5. Actualizamos la tabla visualmente para que veas cómo se reordenan los procesos al instante
+            scheduler.Organize();
             updateReadyQueue(scheduler.getReadyQueue());
         }
     }//GEN-LAST:event_jComboBox1ActionPerformed
@@ -402,24 +387,17 @@ public class Dashboard extends javax.swing.JFrame {
     public void log(String mensaje) {
         SwingUtilities.invokeLater(() -> {
             txtConsola.append(mensaje + "\n");
-            // Auto-scroll hacia abajo
             txtConsola.setCaretPosition(txtConsola.getDocument().getLength());
         });
     }
 
-    // 2. Actualizar el Reloj y el CPU
-// 1. Método para actualizar la Tabla de Listos (jTable1)
+
     public void updateReadyQueue(com.mycompany.sisoperativos.logic.Queue colaListos) {
         SwingUtilities.invokeLater(() -> {
-            // Obtenemos el modelo de la tabla 1
             DefaultTableModel modelo = (DefaultTableModel) tablaListos.getModel();
-            modelo.setRowCount(0); // Esto borra las filas anteriores para no duplicar
-
+            modelo.setRowCount(0);
             if (colaListos != null) {
-                // Empezamos desde el primero de la fila
                 com.mycompany.sisoperativos.logic.PCB aux = colaListos.peek();
-
-                // Recorremos la cola y vamos agregando filas
                 while (aux != null) {
                     modelo.addRow(new Object[]{
                         aux.getId(),
@@ -427,7 +405,7 @@ public class Dashboard extends javax.swing.JFrame {
                         aux.getPriority(),
                         aux.getDeadlineR()
                     });
-                    aux = aux.getNext(); // Pasamos al siguiente
+                    aux = aux.getNext();
                 }
             }
         });

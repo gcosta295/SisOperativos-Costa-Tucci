@@ -209,30 +209,24 @@ public class Queue {
         len = +1; // Increment queue size
     }
 
-    public void enqueueByPriority(PCB newNode) { //Shortest time remaining (the same as EDF but with duration)
-        // Case 1: The queue is empty
-
+    public void enqueueByPriority(PCB newNode) {
         if (firstP == null) {
             firstP = newNode;
             lastP = newNode;
             newNode.setNext(null);
             newNode.setBefore(null);
-        } // Case 2: The new process has the shortest deadline (New Head)
-        else if (newNode.getPriority() <= firstP.getPriority()) {
-            firstP.setNext(newNode);
-            newNode.setBefore(firstP);
-        } // Case 3: Find the correct position in the middle or at the end
+        }
+        else if (newNode.getPriority() >= firstP.getPriority()) {
+            firstP.setBefore(newNode);
+            newNode.setNext(firstP);
+        }
         else {
             PCB current = firstP;
-
-            // Traverse the list until finding the correct spot
-            while (current.getNext() != null && current.getNext().getPriority() < newNode.getPriority()) {
+            while (current.getNext() != null && current.getNext().getPriority() > newNode.getPriority()) {
                 current = current.getNext();
             }
-
-            // Insert newNode after 'current'
-            newNode.setNext(current.getNext());
             newNode.setBefore(current);
+            newNode.setNext(current.getNext());
 
             if (current.getNext() != null) {
                 // Link the following node back to the new node
