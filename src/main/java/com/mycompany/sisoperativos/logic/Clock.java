@@ -63,30 +63,36 @@ public class Clock implements Runnable {
 
                 // 1. Imprimir en consola para saber si el reloj sigue vivo
                 System.out.println(">>> Reloj Tick: " + contadorCiclos);
-
-                scheduler.runExecutionCycle();
-                scheduler.checkAndPurgeDeadlines();
-                if (contadorCiclos % 8 == 0){
+                synchronized (scheduler.getReadyQueue()) {
+                    scheduler.runExecutionCycle();
+                    scheduler.checkAndPurgeDeadlines();
+                }
+                if (contadorCiclos % 8 == 0) {
                     Process process = new Process();
                     process.getPCB().setId(2);
                     process.periodicProcess(process.getPCB(), scheduler.getReadyQueue(), scheduler.getPolitic());
-                }if (contadorCiclos % 12 == 0){
+                }
+                if (contadorCiclos % 12 == 0) {
                     Process process = new Process();
                     process.getPCB().setId(3);
                     process.periodicProcess(process.getPCB(), scheduler.getReadyQueue(), scheduler.getPolitic());
-                }if (contadorCiclos % 18 == 0){
+                }
+                if (contadorCiclos % 18 == 0) {
                     Process process = new Process();
                     process.getPCB().setId(5);
                     process.periodicProcess(process.getPCB(), scheduler.getReadyQueue(), scheduler.getPolitic());
-                }if (contadorCiclos % 40 == 0){
+                }
+                if (contadorCiclos % 40 == 0) {
                     Process process = new Process();
                     process.getPCB().setId(7);
                     process.periodicProcess(process.getPCB(), scheduler.getReadyQueue(), scheduler.getPolitic());
-                }if (contadorCiclos % 80 == 0){
+                }
+                if (contadorCiclos % 80 == 0) {
                     Process process = new Process();
                     process.getPCB().setId(11);
                     process.periodicProcess(process.getPCB(), scheduler.getReadyQueue(), scheduler.getPolitic());
-                }if (contadorCiclos % 200 == 0){
+                }
+                if (contadorCiclos % 200 == 0) {
                     Process process = new Process();
                     process.getPCB().setId(13);
                     process.periodicProcess(process.getPCB(), scheduler.getReadyQueue(), scheduler.getPolitic());

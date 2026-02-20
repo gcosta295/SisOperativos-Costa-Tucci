@@ -50,7 +50,7 @@ public class Scheduling {
         this.System_Quantum = 10;
         this.gui = gui;
         this.ramSize = 256;
-        this.successFinish=0;
+        this.successFinish = 0;
     }
 
     public Queue getFinishedQueue() {
@@ -67,26 +67,28 @@ public class Scheduling {
     }
 
     public void Organize() {
-        if (this.readyQueue.getLen() == 0 && this.currentProcess == null) {
-            return;
-        }
-        Queue newQueue = new Queue();
-        PCB aux = readyQueue.dequeue();
-        while (aux != null) {
-            if ("EDF".equals(this.politic)) {
-                newQueue.enqueueByDeadline(aux);
-            } else if ("SRT".equals(this.politic)) {
-                newQueue.enqueueByRemainingTime(aux);
-            } else if ("Priority".equals(this.politic)) {
-                newQueue.enqueueByPriority(aux);
-            } else {
-                // Para RR y FIFO usamos FIFO simple
-                newQueue.enqueueFIFO(aux);
+        synchronized (readyQueue) {
+            if (this.readyQueue.getLen() == 0 && this.currentProcess == null) {
+                return;
             }
-            aux = readyQueue.dequeue();
+            Queue newQueue = new Queue();
+            PCB aux = readyQueue.dequeue();
+            while (aux != null) {
+                if ("EDF".equals(this.politic)) {
+                    newQueue.enqueueByDeadline(aux);
+                } else if ("SRT".equals(this.politic)) {
+                    newQueue.enqueueByRemainingTime(aux);
+                } else if ("Priority".equals(this.politic)) {
+                    newQueue.enqueueByPriority(aux);
+                } else {
+                    // Para RR y FIFO usamos FIFO simple
+                    newQueue.enqueueFIFO(aux);
+                }
+                aux = readyQueue.dequeue();
+            }
+            // IMPORTANTE: Reemplazar la cola vieja con la nueva ya ordenada
+            this.readyQueue = newQueue;
         }
-        // IMPORTANTE: Reemplazar la cola vieja con la nueva ya ordenada
-        this.readyQueue = newQueue;
     }
 
     public void runExecutionCycle() {
@@ -94,25 +96,30 @@ public class Scheduling {
         if (currentProcess == null) {
             currentProcess = readyQueue.dequeue();
             if (currentProcess != null) {
+                currentProcess.setQuantum(0);
             } else {
                 return; // Si no hay nada en la cola, no hacemos nada este ciclo.
             }
         }
+
         // 2. Si hay un proceso en el CPU, lo ejecutamos un ciclo
         if (currentProcess != null) {
             // Ejecución estándar
             currentProcess.setDurationR(currentProcess.getDurationR() - 1);
             currentProcess.setQuantum(currentProcess.getQuantum() + 1);
             currentProcess.setDeadlineR(currentProcess.getDeadlineR() - 1);
+
             // 3. ¿Terminó con éxito?
+            if (currentProcess.getDurationR() <= 0) {
                 gui.log("Proceso " + currentProcess.getId() + " finalizado con ÉXITO.");
                 currentProcess.setState("Exit");
                 if (finishedQueue != null) {
-                    successFinish+=1;
+                    successFinish += 1;
                     finishedQueue.enqueueFIFO(currentProcess);
                 }
                 currentProcess = null; // Liberamos el CPU para el próximo ciclo
             } // 4. ¿Se le acabó el deadline estando en el CPU?
+            else if (currentProcess.getDeadlineR() <= 0) {
                 gui.log("¡ALERTA! Proceso " + currentProcess.getId() + " TERMINADO ANÓMALAMENTE (Deadline Vencido).");
                 currentProcess.setState("Aborted");
                 if (finishedQueue != null) {
@@ -120,6 +127,7 @@ public class Scheduling {
                 }
                 currentProcess = null; // Lo sacamos del CPU a la fuerza
             } // 5. LÓGICA DE PREEMPCIÓN (Solo revisamos si el proceso sigue vivo en el CPU)
+            else {
                 PCB nextInQueue = readyQueue.peek(); // Asumo que peek() y getFirstP() hacen lo mismo.
 
                 if (nextInQueue != null) {
@@ -211,8 +219,9 @@ public class Scheduling {
     }
 // Método para envejecer procesos y purgar los vencidos
 
+    public void checkAndPurgeDeadlines() {
         // 1. Revisamos si hay procesos en la cola de listos
-        if (queue != null && queue.peek() != null) {
+        if (readyQueue != null && readyQueue.peek() != null) {
 
             Queue sobrevivientes = new Queue(); // Cola temporal
 
@@ -223,6 +232,7 @@ public class Scheduling {
             while (aux != null) {
                 // Restamos 1 al tiempo límite por el ciclo que acaba de pasar
                 aux.setDeadlineR(aux.getDeadlineR() - 1);
+          
 
                 // ¿Se le acabó el tiempo antes de terminar su ráfaga?
                 if (aux.getDeadlineR() <= 0 && aux.getDurationR() > 0) {
@@ -243,7 +253,6 @@ public class Scheduling {
             }
 
             // Reemplazamos la cola vieja con los que sobrevivieron
-    }
             this.readyQueue = sobrevivientes;
         }
     }
