@@ -65,12 +65,13 @@ public class Clock implements Runnable {
                 System.out.println(">>> Reloj Tick: " + contadorCiclos);
 
                 scheduler.runExecutionCycle();
-
+                scheduler.checkAndPurgeDeadlines();
                 // 2. Comprobar si la ventana existe antes de actualizar
                 if (gui != null) {
                     gui.updateStatus(contadorCiclos, scheduler.getCurrentProcess());
                     gui.updateReadyQueue(scheduler.getReadyQueue());
                     gui.updateBlockedQueue(scheduler.getBlockedQueue());
+                    gui.updateFinishedQueue(scheduler.getFinishedQueue());
                 } else {
                     System.out.println("!!! ERROR: El reloj no tiene conexión con la ventana (gui es null)");
                 }
