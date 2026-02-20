@@ -215,22 +215,20 @@ public class Queue {
             lastP = newNode;
             newNode.setNext(null);
             newNode.setBefore(null);
-        }
-        else if (newNode.getPriority() >= firstP.getPriority()) {
+        } else if (newNode.getPriority() >= firstP.getPriority()) {
             // El nuevo nodo va de primero
             firstP.setBefore(newNode);
             newNode.setNext(firstP);
             newNode.setBefore(null); // Buena práctica: asegurarnos de que no haya nada antes
-            
+
             firstP = newNode; // ¡CORRECCIÓN CRÍTICA! Actualizamos la cabeza de la fila
-        }
-        else {
+        } else {
             PCB current = firstP;
             // Buscamos la posición correcta
             while (current.getNext() != null && current.getNext().getPriority() > newNode.getPriority()) {
                 current = current.getNext();
             }
-            
+
             // Insertamos el nuevo nodo
             newNode.setBefore(current);
             newNode.setNext(current.getNext());
@@ -244,8 +242,41 @@ public class Queue {
             }
             current.setNext(newNode);
         }
-        
+
         len++; // ¡CORRECCIÓN! Ahora sí incrementa el tamaño en 1
+    }
+
+    // Método para encolar usando SOLO el puntero de I/O
+    public void enqueueIO(PCB process) {
+        process.setNextIO(null); // Limpiamos por si acaso
+
+        if (this.firstP == null) {
+            this.firstP = process;
+            this.lastP = process;
+        } else {
+            this.lastP.setNextIO(process); // Enlazamos usando la segunda "cuerda"
+            this.lastP = process;
+        }
+        // Incrementa tu contador de tamaño si tienes uno (ej. this.len++)
+    }
+
+    // Método para desencolar usando SOLO el puntero de I/O
+    public PCB dequeueIO() {
+        if (this.firstP == null) {
+            return null;
+        }
+
+        PCB processToExtract = this.firstP;
+        this.firstP = this.firstP.getNextIO(); // Avanzamos usando la segunda "cuerda"
+
+        if (this.firstP == null) {
+            this.lastP = null;
+        }
+
+        processToExtract.setNextIO(null); // Limpiamos el rastro
+        // Disminuye tu contador de tamaño si tienes uno (ej. this.len--)
+
+        return processToExtract;
     }
 
     public void decrementAllDeadlines() {
@@ -277,14 +308,14 @@ public class Queue {
             this.lastIO = io;
         }
     }
-    
-    public InputOutput ioSercher(String name){
+
+    public InputOutput ioSercher(String name) {
         InputOutput temp = this.firstIO;
-        while (temp!=null){
-            if (temp.getName().equals(name)){
+        while (temp != null) {
+            if (temp.getName().equals(name)) {
                 return temp;
             }
-            temp=temp.getNext();
+            temp = temp.getNext();
         }
         return null;
     }
@@ -331,6 +362,5 @@ public class Queue {
 
         return null; // No se encontró el proceso
     }
-    
-    
+
 }

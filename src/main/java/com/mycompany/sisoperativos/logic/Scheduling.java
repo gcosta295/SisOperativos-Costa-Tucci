@@ -22,6 +22,7 @@ public class Scheduling {
     private Dashboard gui;
     private int ramSize;
     private int successFinish;
+    public final Object lock = new Object();
 
     public Queue getIoQueue() {
         return ioQueue;
@@ -51,6 +52,7 @@ public class Scheduling {
         this.gui = gui;
         this.ramSize = 256;
         this.successFinish = 0;
+
     }
 
     public Queue getFinishedQueue() {
@@ -67,7 +69,7 @@ public class Scheduling {
     }
 
     public void Organize() {
-        synchronized (readyQueue) {
+        synchronized (this.lock) {
             if (this.readyQueue.getLen() == 0 && this.currentProcess == null) {
                 return;
             }
@@ -92,85 +94,147 @@ public class Scheduling {
     }
 
     public void runExecutionCycle() {
-        if (currentProcess == null) {
-            currentProcess = readyQueue.dequeue();
+        synchronized (this.lock) {
+            // 1. Cargar proceso si el CPU está vacío
+            if (currentProcess == null) {
+                currentProcess = readyQueue.dequeue();
+                if (currentProcess != null) {
+                    currentProcess.setQuantum(0);
+                }
+            }
+
+            // 2. Ejecutar un ciclo del proceso en el CPU
             if (currentProcess != null) {
-                currentProcess.setQuantum(0);
-            } else {
-                return; 
-            }
-        }
-        if (currentProcess != null) {
-            currentProcess.setDurationR(currentProcess.getDurationR() - 1);
-            currentProcess.setQuantum(currentProcess.getQuantum() + 1);
-            currentProcess.setDeadlineR(currentProcess.getDeadlineR() - 1);
-            if (currentProcess.getInputOutput()!=null){
-                InputOutput io = this.ioQueue.ioSercher(currentProcess.getInputOutput());
-                if (currentProcess.getDurationHope()-currentProcess.getDurationR()==io.getCounter()){
-                    PCB aux = this.readyQueue.dequeue();
-                    io.ioChecker(currentProcess,this.blockedQueue);
+                currentProcess.setDurationR(currentProcess.getDurationR() - 1);
+                currentProcess.setQuantum(currentProcess.getQuantum() + 1);
+                currentProcess.setDeadlineR(currentProcess.getDeadlineR() - 1);
+
+                // ¿Le toca ir a E/S?
+                // ¿Le toca ir a E/S?
+                if (currentProcess.getInputOutput() != null) {
+                    InputOutput io = this.ioQueue.ioSercher(currentProcess.getInputOutput());
+
+                    // Si el momento de ir a E/S coincide con el ciclo actual
+                    if (io != null && (currentProcess.getDurationHope() - currentProcess.getDurationR() == io.getCounter())) {
+                        gui.log("!!! PROCESO " + currentProcess.getId() + " ENVIADO A E/S !!!");
+
+                        // 1. Cambiamos su estado oficial a Bloqueado
+                        currentProcess.setState("Blocked");
+
+                        // 2. Lo mandamos al dispositivo de I/O (ioChecker ahora se encarga de meterlo a BlockedQueue)
+                        io.ioChecker(currentProcess, this.blockedQueue);
+
+                        // 3. Liberamos el CPU 
+                        currentProcess = null;
+                    }
                 }
             }
+
+            // 3. ACTUALIZAR DISPOSITIVOS DE I/O 
             InputOutput tempIO = this.ioQueue.getFirstIO();
-                while (tempIO!=null){
-                    if (tempIO.getPcbProcess().getDurationHope()-tempIO.getPcbProcess().getDurationR()==tempIO.getTimer()){
-                        PCB aux = this.blockedQueue.extractById(currentProcess.getId());
-                        tempIO.getPcbProcess().setInputOutput(null);
-                        if (politic.equals("FIFO") || politic.equals("RR")){
-                            this.readyQueue.enqueueFIFO(tempIO.getPcbProcess());
-                        }else if (politic.equals("SRT")){
-                            this.readyQueue.enqueueByRemainingTime(tempIO.getPcbProcess());
-                        }else if (politic.equals("Priority")){
-                            this.readyQueue.enqueueByPriority(tempIO.getPcbProcess());
-                        }else if (politic.equals("EDF")){
-                            this.readyQueue.enqueueByDeadline(tempIO.getPcbProcess());
+            while (tempIO != null) {
+                PCB pcbEnIO = tempIO.getPcbProcess();
+
+                if (pcbEnIO != null) {
+                    // 1. Le restamos 1 a TU timer del dispositivo
+                    tempIO.setTimer(tempIO.getTimer() - 1);
+
+                    // 2. ¿El timer llegó a 0? (Significa que ya cumplió su totalTime)
+                    // 2. ¿El timer llegó a 0? (Significa que ya cumplió su totalTime)
+                    if (tempIO.getTimer() <= 0) {
+
+                        // Lo sacamos de la tabla general de bloqueados
+                        this.blockedQueue.extractById(pcbEnIO.getId());
+
+                        // ¡NUEVO! Limpiamos su puntero por si acaso se trae a otros procesos pegados
+                        pcbEnIO.setNext(null);
+
+                        // Limpiamos la variable porque ya no necesita I/O
+                        pcbEnIO.setInputOutput(null);
+
+                        // ¡NUEVO! Le cambiamos el estado para que la interfaz lo pueda dibujar
+                        pcbEnIO.setState("Ready");
+
+                        gui.log("Proceso " + pcbEnIO.getId() + " terminó su I/O en " + tempIO.getName());
+
+                        // Lo devolvemos a la cola Ready (agregué FIFO como salvavidas por si acaso)
+                        if ("FCFS".equals(politic) || "FIFO".equals(politic) || "RR".equals(politic)) {
+                            this.readyQueue.enqueueFIFO(pcbEnIO);
+                        } else if ("SRT".equals(politic)) {
+                            this.readyQueue.enqueueByRemainingTime(pcbEnIO);
+                        } else if ("Priority".equals(politic)) {
+                            this.readyQueue.enqueueByPriority(pcbEnIO);
+                        } else if ("EDF".equals(politic)) {
+                            this.readyQueue.enqueueByDeadline(pcbEnIO);
+                        } else {
+                            // Salvavidas: Si la política viene nula o con otro nombre, que no se pierda el proceso
+                            this.readyQueue.enqueueFIFO(pcbEnIO);
                         }
-                    }else{
-                        tempIO.getPcbProcess().setDurationR(tempIO.getPcbProcess().getDurationR()-1);
+
+                        // 3. Si había alguien haciendo fila específica para ESTE dispositivo, lo metemos
+                        // CAMBIA EL dequeue() normal por dequeueIO()
+                        PCB nextInIO = tempIO.getIOQueue().dequeueIO();
+                        tempIO.setPcbProcess(nextInIO);
+
+                        // ¡Y le reiniciamos el timer a este nuevo proceso para que empiece su cuenta regresiva!
+                        if (nextInIO != null) {
+                            tempIO.setTimer(tempIO.getTotalTime());
+                        }
                     }
-                    tempIO=tempIO.getNext();
                 }
-            if (currentProcess.getDurationR() <= 0) {
-                gui.log("Proceso " + currentProcess.getId() + " finalizado con ÉXITO.");
-                currentProcess.setState("Exit");
-                if (finishedQueue != null) {
-                    successFinish += 1;
-                    finishedQueue.enqueueFIFO(currentProcess);
-                }
-                currentProcess = null;
-            } 
-            else if (currentProcess.getDeadlineR() <= 0) {
-                gui.log("¡ALERTA! Proceso " + currentProcess.getId() + " TERMINADO ANÓMALAMENTE (Deadline Vencido).");
-                currentProcess.setState("Aborted");
-                if (finishedQueue != null) {
-                    finishedQueue.enqueueFIFO(currentProcess);
-                }
-                currentProcess = null; 
-            } 
-            else {
-                PCB nextInQueue = readyQueue.peek();
+                tempIO = tempIO.getNext(); // Pasamos al siguiente dispositivo
+            }
 
-                if (nextInQueue != null) {
-                    boolean expulsar = false;
-
-                    if ("RR".equals(this.politic) && currentProcess.getQuantum() >= 8) {
-                        gui.log("!!! QUANTUM EXPIRED !!!");
-                        expulsar = true;
-                    } else if ("SRT".equals(this.politic) && nextInQueue.getDurationR() < currentProcess.getDurationR()) {
-                        gui.log("!!! PREEMPTION (SRT) !!! ID " + nextInQueue.getId() + " es más corto.");
-                        expulsar = true;
-                    } else if ("EDF".equals(this.politic) && nextInQueue.getDeadlineR() < currentProcess.getDeadlineR()) {
-                        gui.log("!!! PREEMPTION (EDF) !!! ID " + nextInQueue.getId() + " es más urgente.");
-                        expulsar = true;
-                    } else if ("Priority".equals(this.politic) && nextInQueue.getPriority() > currentProcess.getPriority()) {
-                        gui.log("!!! PREEMPTION (PRIORITY) !!! ID " + nextInQueue.getId() + " tiene más prioridad.");
-                        expulsar = true;
+            // 4. Revisar finalización, muerte o expulsión 
+            // (Solo entra aquí si el proceso NO se fue a E/S este ciclo)
+            if (currentProcess != null) {
+                // ¿Terminó con éxito?
+                if (currentProcess.getDurationR() <= 0) {
+                    gui.log("Proceso " + currentProcess.getId() + " finalizado con ÉXITO.");
+                    currentProcess.setState("Exit");
+                    if (finishedQueue != null) {
+                        successFinish += 1;
+                        finishedQueue.enqueueFIFO(currentProcess);
                     }
+                    currentProcess = null; // Liberamos el CPU
+                } // ¿Se le acabó el deadline estando en el CPU?
+                else if (currentProcess.getDeadlineR() <= 0) {
+                    gui.log("¡ALERTA! Proceso " + currentProcess.getId() + " TERMINADO ANÓMALAMENTE (Deadline Vencido en CPU).");
+                    currentProcess.setState("Aborted");
+                    if (finishedQueue != null) {
+                        finishedQueue.enqueueFIFO(currentProcess);
+                    }
+                    currentProcess = null; // Liberamos el CPU
+                } // LÓGICA DE PREEMPCIÓN
+                else {
+                    PCB nextInQueue = readyQueue.peek();
 
-                    if (expulsar) {
-                        currentProcess.setQuantum(0);
-                        readyQueue.enqueueFIFO(currentProcess); 
-                        currentProcess = null; 
+                    if (nextInQueue != null) {
+                        boolean expulsar = false;
+
+                        if ("RR".equals(this.politic) && currentProcess.getQuantum() >= this.System_Quantum) {
+                            gui.log("!!! QUANTUM EXPIRED !!! ID " + currentProcess.getId() + " vuelve a la cola.");
+                            expulsar = true;
+                        } else if ("SRT".equals(this.politic) && nextInQueue.getDurationR() < currentProcess.getDurationR()) {
+                            gui.log("!!! PREEMPTION (SRT) !!! ID " + nextInQueue.getId() + " es más corto.");
+                            expulsar = true;
+                        } else if ("EDF".equals(this.politic) && nextInQueue.getDeadlineR() < currentProcess.getDeadlineR()) {
+                            gui.log("!!! PREEMPTION (EDF) !!! ID " + nextInQueue.getId() + " es más urgente.");
+                            expulsar = true;
+                        } else if ("Priority".equals(this.politic) && nextInQueue.getPriority() > currentProcess.getPriority()) {
+                            gui.log("!!! PREEMPTION (PRIORITY) !!! ID " + nextInQueue.getId() + " tiene más prioridad.");
+                            expulsar = true;
+                        }
+
+                        if (expulsar) {
+                            currentProcess.setQuantum(0);
+
+                            // ¡LIMPIEZA OBLIGATORIA! 
+                            currentProcess.setNext(null);
+
+                            readyQueue.enqueueFIFO(currentProcess);
+                            currentProcess = null;
+                        }
                     }
                 }
             }
@@ -239,30 +303,44 @@ public class Scheduling {
     }
 // Método para envejecer procesos y purgar los vencidos
 
+// Método para envejecer procesos y purgar los vencidos SIN romper la cola
     public void checkAndPurgeDeadlines(Queue queue) {
-        if (queue != null && queue.peek() != null) {
-            Queue sobrevivientes = new Queue(); 
-            PCB aux = queue.dequeue();
+        if (queue == null || queue.peek() == null) {
+            return;
+        }
+
+        // Sincronizamos para que la interfaz no lea la cola mientras la modificamos
+        synchronized (this.lock) {
+            PCB aux = queue.peek(); // Miramos el primero, NO lo sacamos con dequeue
+
             while (aux != null) {
+                // Guardamos el siguiente antes de evaluar, por si tenemos que eliminar a 'aux'
+                PCB siguiente = aux.getNext();
+
+                // 1. Restamos 1 al deadline
                 aux.setDeadlineR(aux.getDeadlineR() - 1);
+
+                // 2. ¿Se le acabó el tiempo?
                 if (aux.getDeadlineR() <= 0 && aux.getDurationR() > 0) {
-                    gui.log("¡ALERTA! Proceso " + aux.getId() + " TERMINADO ANÓMALAMENTE (Deadline Vencido).");
-                    aux.setState("Aborted"); 
+                    gui.log("¡ALERTA! Proceso " + aux.getId() + " TERMINADO ANÓMALAMENTE (Deadline Vencido en espera).");
+                    aux.setState("Aborted");
+
+                    // Usamos tu método para extraer SOLO al que se le acabó el tiempo
+                    queue.extractById(aux.getId());
+
+                    // ¡EL SALVAVIDAS! Le borramos la memoria de quién estaba detrás de él
+                    aux.setNext(null);
+
+                    // Lo mandamos al cementerio
                     if (finishedQueue != null) {
                         finishedQueue.enqueueFIFO(aux);
                     }
-                } else {
-                    sobrevivientes.enqueueFIFO(aux);
                 }
-                aux = queue.dequeue();
-            }
-            if (queue.getName().equals("ReadyQueue")){
-                this.readyQueue = sobrevivientes;
-                this.readyQueue.setName("ReadyQueue");
-            }else if (queue.getName().equals("BlockedQueue")){
-                this.blockedQueue = sobrevivientes;
-                this.blockedQueue.setName("BlockedQueue");
+
+                // 3. Pasamos al siguiente
+                aux = siguiente;
             }
         }
+
     }
 }

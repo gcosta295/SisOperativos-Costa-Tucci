@@ -9,6 +9,7 @@ package com.mycompany.sisoperativos.logic;
  * @author astv06
  */
 public class InputOutput {
+
     private String name;
     private int totalTime;
     private int timer;
@@ -82,69 +83,75 @@ public class InputOutput {
         this.IOQueue = IOQueue;
     }
 
-    public InputOutput(){
-        this.counter=0;
-        this.pcbProcess=null;
-        this.inUse=false;
-        this.name=null;
-        this.totalTime=0;
-        this.timer=0;
-        this.IOQueue=new Queue();
+    public InputOutput() {
+        this.counter = 0;
+        this.pcbProcess = null;
+        this.inUse = false;
+        this.name = null;
+        this.totalTime = 0;
+        this.timer = 0;
+        this.IOQueue = new Queue();
     }
-    
-    public void initializationIO(int index){
-        if(index==0){
-            this.counter=2;
-            this.name="Receptor";
-            this.totalTime=5;
-            this.timer=7;
+
+    public void initializationIO(int index) {
+        if (index == 0) {
+            this.counter = 2;
+            this.name = "Receptor";
+            this.totalTime = 5;
+            this.timer = 7;
         }
-        if(index==1){
-            this.counter=4;
-            this.name="GNSS";
-            this.totalTime=4;
-            this.timer=8    ;
+        if (index == 1) {
+            this.counter = 4;
+            this.name = "GNSS";
+            this.totalTime = 4;
+            this.timer = 8;
         }
-        if(index==2){
-            this.counter=6;
-            this.name="Thermometer";
-            this.totalTime=2;
-            this.timer=8;
+        if (index == 2) {
+            this.counter = 6;
+            this.name = "Thermometer";
+            this.totalTime = 2;
+            this.timer = 8;
         }
-        if(index==3){
-            this.counter=8;
-            this.name="SD Memory";
-            this.totalTime=6;
-            this.timer=14;
+        if (index == 3) {
+            this.counter = 8;
+            this.name = "SD Memory";
+            this.totalTime = 6;
+            this.timer = 14;
         }
-        if(index==4){
-            this.counter=1;
-            this.name="Sensor";
-            this.totalTime=8;
-            this.timer=9;
+        if (index == 4) {
+            this.counter = 1;
+            this.name = "Sensor";
+            this.totalTime = 8;
+            this.timer = 9;
         }
-        if(index==5){
-            this.counter=6;
-            this.name="Sysadmin";
-            this.totalTime=6;
-            this.timer=12;
+        if (index == 5) {
+            this.counter = 6;
+            this.name = "Sysadmin";
+            this.totalTime = 6;
+            this.timer = 12;
         }
-        if(index==6){
-            this.counter=6;
-            this.name="Radiation Detector";
-            this.totalTime=10;
-            this.timer=16;
+        if (index == 6) {
+            this.counter = 6;
+            this.name = "Radiation Detector";
+            this.totalTime = 10;
+            this.timer = 16;
         }
-    } 
-    
-    public void ioChecker(PCB pcb, Queue queue){
-        if (this.pcbProcess==null){
-            this.pcbProcess=pcb;
-        }else{
-            this.IOQueue.enqueueFIFO(pcb);
+    }
+
+    public void ioChecker(PCB pcb, Queue queue) {
+        if (this.pcbProcess == null) {
+            this.pcbProcess = pcb;
+            this.timer = this.totalTime;
+
+            // Va a la general usando el puntero normal
+            queue.enqueueFIFO(pcb);
+        } else {
+            // ¡MAGIA! Va a la cola del dispositivo usando el hilo secundario...
+            this.IOQueue.enqueueIO(pcb);
+
+            // ...Y TAMBIÉN va a la general usando el hilo principal
             queue.enqueueFIFO(pcb);
         }
     }
-    
-    
+
 }
