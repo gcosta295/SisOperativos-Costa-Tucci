@@ -145,7 +145,7 @@ public class Process {
                 if ((id % 5 == 0)&&(flag)){
                     flag = false;
                     this.processName="Full Memory";
-                    this.PCB.setInputOutput("SD memory");
+                    this.PCB.setInputOutput("SD Memory");
                     this.PCB.setDuration(60);
                     this.deadLine=156;
                     this.PCB.setSize(1);

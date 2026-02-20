@@ -16,7 +16,7 @@ public class Clock implements Runnable {
     private int contadorCiclos = 0; //Siempre el reloj arranca en 0
     private int duracionCicloMs; // Tiempo en milisegundos que dura cada ciclo
     private boolean encendido = true;
-    private final Scheduling scheduler;
+    private Scheduling scheduler;
     private Dashboard gui;
 
     public Clock(int duracionInicial, Scheduling scheduler, Dashboard gui) {
@@ -54,6 +54,10 @@ public class Clock implements Runnable {
         this.encendido = encendido;
     }
 
+    public void setScheduler(Scheduling scheduler) {
+        this.scheduler = scheduler;
+    }
+
     @Override
     public void run() {
         while (true) {
@@ -64,9 +68,18 @@ public class Clock implements Runnable {
                 // 1. Imprimir en consola para saber si el reloj sigue vivo
                 System.out.println(">>> Reloj Tick: " + contadorCiclos);
 
-                scheduler.runExecutionCycle();
+                this.setScheduler(scheduler.runExecutionCycle());
                 scheduler.checkAndPurgeDeadlines(scheduler.getReadyQueue());                
-                scheduler.checkAndPurgeDeadlines(scheduler.getBlockedQueue());                
+                scheduler.checkAndPurgeDeadlines(scheduler.getBlockedQueue());
+                InputOutput io = scheduler.getIoQueue().getFirstIO();
+                while (io!=null){
+                    if (io.getPcbProcess()==null){
+                        PCB pcb = io.getIOQueue().dequeue();
+                        System.out.println(pcb);
+                        io.setPcbProcess(pcb);
+                    }
+                    io=io.getNext();
+                }
                 if (contadorCiclos % 8 == 0){
                     Process process = new Process();
                     process.getPCB().setId(2);
