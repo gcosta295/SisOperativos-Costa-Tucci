@@ -20,19 +20,14 @@ import javax.swing.table.DefaultTableModel;
  */
 public class Dashboard extends javax.swing.JFrame {
 
-    // Instancias de tu motor
     private Scheduling scheduler;
     private Clock simClock;
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Dashboard.class.getName());
     private MonitorWindow monitor = new MonitorWindow();
 
-    /**
-     * Creates new form Dashboard
-     */
     public Dashboard() {
-        initComponents(); // Carga la ventana
+        initComponents(); 
 
-        // 1. Inicializamos tu motor
         scheduler = new Scheduling(this);
         scheduler.getReadyQueue().setName("ReadyQueue");
         scheduler.getBlockedQueue().setName("BlockedQueue");
@@ -73,7 +68,6 @@ public class Dashboard extends javax.swing.JFrame {
             process.periodicProcess(process.getPCB(), scheduler.getReadyQueue(), scheduler.getPolitic(), simClock.getContadorCiclos());
             counter -= 1;
         }
-        // 3. ¡IMPORTANTE! Creamos el reloj y le pasamos "this" (esta ventana)
     }
 
     /**
@@ -612,24 +606,15 @@ public class Dashboard extends javax.swing.JFrame {
             public void run() {
                 for (int i = 0; i < 20; i++) {
                     try {
-                        // 1. Creamos el proceso afuera del candado (esto no rompe nada)
                         System.out.println(">>> Intentando crear proceso " + i + "...");
                         Process newP = new Process();
+                        synchronized (scheduler.lock) { //candado
 
-                        // 2. ¡CERRAMOS EL CANDADO! Pedimos permiso exclusivo
-                        synchronized (scheduler.lock) {
-
-                            // Intentamos configurarlo y encolarlo
+                            // encolamos el proceso
                             newP.aperiodicProcess(false, scheduler.getReadyQueue(), scheduler.getPolitic(), simClock.getContadorCiclos());
                             System.out.println(">>> Proceso " + i + " encolado correctamente.");
-
-                            // Si tu simulador requiere reordenar (Priority, SRT, EDF), descomenta esto:
-                            // scheduler.Organize();
-                            // Actualizamos la tabla leyendo la cola de forma segura
-                        } // 3. ¡ABRIMOS EL CANDADO! El scheduler puede volver a trabajar.
+                        } 
                         updateReadyQueue(scheduler.getReadyQueue());
-
-                        // 4. Pausamos el hilo medio segundo AFUERA del candado
                         Thread.sleep(500);
 
                     } catch (Exception e) {
@@ -637,8 +622,7 @@ public class Dashboard extends javax.swing.JFrame {
                         e.printStackTrace();
                         break;
                     }
-                }
-                System.out.println("¡El hilo generador terminó!");
+                } System.out.println("¡El hilo generador terminó!");
             }
         });
 
@@ -646,78 +630,51 @@ public class Dashboard extends javax.swing.JFrame {
     }//GEN-LAST:event_randomActionPerformed
 
     private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
-        // 1. Obtenemos el texto de la opción seleccionada
+        //Obtenemos el texto de la opción seleccionada
         String politicaSeleccionada = (String) jComboBox1.getSelectedItem();
-
         if (scheduler != null) {
-            // 2. Cambiamos el nombre de la regla
-            scheduler.setPolitic(politicaSeleccionada);
-
-            // 3. ¡AQUÍ ESTÁ LA MAGIA! Mandamos a reordenar la cola con la nueva regla
+            scheduler.setPolitic(politicaSeleccionada); //se cambia la politica
             scheduler.Organize();
-
-            // 4. Imprimimos en tu consola visual
             log("--- POLÍTICA CAMBIADA A: " + politicaSeleccionada + " ---");
-
-            // 5. Ahora sí, actualizamos la tabla y se verá el nuevo orden
-            updateReadyQueue(scheduler.getReadyQueue());
+            updateReadyQueue(scheduler.getReadyQueue()); //actualizamos la tabla
         }
     }//GEN-LAST:event_jComboBox1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         System.out.println("¡Botón presionado! Arrancando hilo generador...");
-
         Thread hiloGenerador = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    // Creamos el proceso (esto no afecta a las colas, así que va afuera)
                     System.out.println(">>> Intentando crear proceso ...");
                     Process newP = new Process();
-
-                    // ¡AQUÍ PONEMOS EL CANDADO!
-                    // Pedimos permiso para tocar las colas del scheduler
                     synchronized (scheduler.lock) {
-
-                        // 1. Configuramos y encolamos de forma segura
                         newP.aperiodicProcess(false, scheduler.getReadyQueue(), scheduler.getPolitic(), simClock.getContadorCiclos());
                         System.out.println(">>> Proceso encolado correctamente.");
-
-                        // 2. Si tu política lo requiere, este es el momento perfecto para reorganizar
                         scheduler.Organize();
-
-                        // 3. Actualizamos la tabla de la interfaz
-                    } // ¡SE LIBERA EL CANDADO! 
-                    // A partir de aquí, el reloj de simulación puede volver a trabajar.
+                    } 
                     updateReadyQueue(scheduler.getReadyQueue());
-
-                    // OJO: El sleep DEBE ir afuera del candado. 
-                    // Si lo pones adentro, congelas toda la simulación por medio segundo.
                     Thread.sleep(800);
-
                 } catch (Exception e) {
                     System.err.println("!!! ERROR FATAL creando el proceso !!!");
                     e.printStackTrace();
                 }
-
                 System.out.println("¡El hilo generador terminó!");
             }
         });
-        hiloGenerador.start(); // ¡No olvides iniciar el hilo si no lo tenías!
+        hiloGenerador.start();
     }//GEN-LAST:event_jButton2ActionPerformed
 
     public void actualizarBarraGlobal() {
         SwingUtilities.invokeLater(() -> {
             int totales;
             int exitosos;
-
-            // Bloqueamos rápido para leer los números de forma segura
+            // Bloqueamos para leer de forma segura
             synchronized (scheduler.lock) {
                 totales = scheduler.getFinishedQueue().getLen();
                 exitosos = scheduler.getSuccessFinish();
             }
-
-            // Ya soltamos el candado, ahora podemos hacer matemáticas e interfaz en paz
+            // matematica e interfaz
             if (totales > 0) {
                 barraProgreso.setMaximum(totales);
                 barraProgreso.setValue(exitosos);
@@ -732,25 +689,16 @@ public class Dashboard extends javax.swing.JFrame {
         SwingUtilities.invokeLater(() -> {
             double throughput = 0.0;
             double esperaPromedio = 0.0;
-
-            // 1. Bloqueamos rápido para leer los números de forma segura
             synchronized (scheduler.lock) {
-                // Asumiendo que ya creaste estos métodos en Scheduling.java
                 throughput = scheduler.getThroughput();
                 esperaPromedio = scheduler.getAvgWaitingTime();
             }
-
-            // 2. Soltamos el candado y actualizamos la interfaz
-            // --- ACTUALIZAR BARRA DE THROUGHPUT ---
             // Multiplicamos por 100 para que 1 proceso/tick sea el 100% visual
             int porcentajeThroughput = (int) (throughput * 100);
             barraThroughput.setMaximum(100);
             barraThroughput.setValue(Math.min(porcentajeThroughput, 100)); // Que no pase de 100 visualmente
             barraThroughput.setString(String.format("Throughput: %.3f proc/tick", throughput));
-
-            // --- ACTUALIZAR BARRA DE TIEMPO DE ESPERA ---
             int esperaEntera = (int) esperaPromedio;
-
             // Si la espera supera el límite visual de la barra, ampliamos el límite
             if (esperaEntera >= barraWaitTime.getMaximum()) {
                 barraWaitTime.setMaximum(esperaEntera + 50);
@@ -758,24 +706,18 @@ public class Dashboard extends javax.swing.JFrame {
             else if (esperaEntera < barraWaitTime.getMaximum() / 2 && barraWaitTime.getMaximum() > 100) {
                 barraWaitTime.setMaximum(Math.max(100, esperaEntera + 20));
             }
-
             barraWaitTime.setValue(esperaEntera);
             barraWaitTime.setString(String.format("Espera Promedio: %.1f ticks", esperaPromedio));
-
             // Forzar el repintado
             barraThroughput.repaint();
             barraWaitTime.repaint();
         });
     }
     private void tiempoRelojActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tiempoRelojActionPerformed
-        // 1. Obtenemos el texto de la opción seleccionada
         String velocidadSeleccionada = (String) tiempoReloj.getSelectedItem();
-
-        // 2. Verificamos que el reloj ya esté instanciado/corriendo
         if (simClock != null) {
-            int nuevoTiempo = 1000; // Por defecto lo dejamos en 1 segundo
-
-            // 3. Traducimos el texto a milisegundos usando un Switch
+            int nuevoTiempo = 1000;
+            //Traducimos el texto a milisegundos usando un Switch
             switch (velocidadSeleccionada) {
                 case "Normal (1s)":
                     nuevoTiempo = 1000;
@@ -790,11 +732,7 @@ public class Dashboard extends javax.swing.JFrame {
                     nuevoTiempo = 2000;
                     break;
             }
-
-            // 4. Se lo enviamos al reloj
             simClock.setDuracionCiclo(nuevoTiempo);
-
-            // 5. Dejamos un registro en la consola
             log("--- VELOCIDAD DEL RELOJ CAMBIADA A: " + velocidadSeleccionada + " ---");
         } else {
             log("!!! Aviso: Arranca el simulador primero para cambiar la velocidad.");
@@ -829,40 +767,30 @@ public class Dashboard extends javax.swing.JFrame {
         });
     }
 
-    // 2. Actualizar el Reloj y el CPU
-// 1. Método para actualizar la Tabla de Listos (jTable1)
-    // 1. Método para actualizar la Tabla de Listos (jTable1)
+    
+    //Método para actualizar la Tabla de Listos
     public void updateReadyQueue(com.mycompany.sisoperativos.logic.Queue colaListos) {
         SwingUtilities.invokeLater(() -> {
             // Obtenemos el modelo de la tabla 1
             DefaultTableModel modelo = (DefaultTableModel) tablaListos.getModel();
             modelo.setRowCount(0); // Esto borra las filas anteriores para no duplicar
-
             if (colaListos != null) {
-                // ¡EL SECRETO ESTÁ AQUÍ! 
-                // Frenamos el reloj de simulación solo una fracción de segundo mientras leemos la fila
                 synchronized (scheduler.lock) {
-
-                    // Empezamos desde el primero de la fila
                     com.mycompany.sisoperativos.logic.PCB aux = colaListos.peek();
-
                     // Recorremos la cola y vamos agregando filas de forma segura
                     while (aux != null) {
                         modelo.addRow(new Object[]{
                             aux.getId(),
                             aux.processName(),
-                            // O el nombre de tu getter para CPU restante
                             aux.getPriority(),
-                            aux.getDeadlineR(), // O el getter para Deadline
+                            aux.getDeadlineR(), 
                             aux.getDurationR(),
                             aux.getSize()
                         }
                         );
-
-                        // Avanzamos al siguiente
                         aux = aux.getNext();
                     }
-                } // ¡Listo! Soltamos el candado y el reloj sigue corriendo.
+                } 
             }
         }
         );
@@ -874,54 +802,40 @@ public class Dashboard extends javax.swing.JFrame {
             modelo.setRowCount(0);
             if (colaBloqueados != null) {
                 synchronized (scheduler.lock) {
-
-                    // Empezamos desde el primero de la fila
                     com.mycompany.sisoperativos.logic.PCB aux = colaBloqueados.peek();
-
-                    // Recorremos la cola y vamos agregando filas de forma segura
                     while (aux != null) {
                         modelo.addRow(new Object[]{
                             aux.getId(),
                             aux.processName(),
-                            // O el nombre de tu getter para CPU restante
                             aux.getPriority(),
-                            aux.getDeadlineR(), // O el getter para Deadline
+                            aux.getDeadlineR(),
                             aux.getDurationR(),
                             aux.getSize()
                         });
-
-                        // Avanzamos al siguiente
                         aux = aux.getNext();
                     }
-                } // ¡Listo! Soltamos el candado y el reloj sigue corriendo.
+                }
             }
         });
     }
 
-    // Método para actualizar la Tabla de Suspendidos Listos (tablaSusListos)
     public void updateSuspendedReadyQueue(com.mycompany.sisoperativos.logic.Queue colaSusListos) {
         SwingUtilities.invokeLater(() -> {
-            // Obtenemos el modelo de la tabla de suspendidos listos
             DefaultTableModel modelo = (DefaultTableModel) tablaSusListos.getModel();
             modelo.setRowCount(0); // Borramos filas anteriores
-
             if (colaSusListos != null) {
                 // Cerramos el candado para lectura segura
                 synchronized (scheduler.lock) {
                     com.mycompany.sisoperativos.logic.PCB aux = colaSusListos.peek();
-
                     // Recorremos la cola
                     while (aux != null) {
                         modelo.addRow(new Object[]{
                             aux.getId(),
                             aux.processName(),
-                            // O el nombre de tu getter para CPU restante
                             aux.getPriority(),
-                            aux.getDeadlineR(), // O el getter para Deadline
+                            aux.getDeadlineR(),
                             aux.getDurationR(),
                             aux.getSize()
-                        // Nota: Si en tu diseño agregaste una columna para el tamaño en RAM,
-                        // solo añade aquí: aux.getSize()
                         });
                         aux = aux.getNext();
                     }
@@ -933,27 +847,19 @@ public class Dashboard extends javax.swing.JFrame {
     // Método para actualizar la Tabla de Suspendidos Bloqueados (tablaSusBloqueados)
     public void updateSuspendedBlockedQueue(com.mycompany.sisoperativos.logic.Queue colaSusBloqueados) {
         SwingUtilities.invokeLater(() -> {
-            // Obtenemos el modelo de la tabla de suspendidos bloqueados
             DefaultTableModel modelo = (DefaultTableModel) tablaSusBloqueados.getModel();
-            modelo.setRowCount(0); // Borramos filas anteriores
-
+            modelo.setRowCount(0); 
             if (colaSusBloqueados != null) {
-                // Cerramos el candado para lectura segura
                 synchronized (scheduler.lock) {
                     com.mycompany.sisoperativos.logic.PCB aux = colaSusBloqueados.peek();
-
-                    // Recorremos la cola
                     while (aux != null) {
                         modelo.addRow(new Object[]{
                             aux.getId(),
                             aux.processName(),
-                            // O el nombre de tu getter para CPU restante
                             aux.getPriority(),
-                            aux.getDeadlineR(), // O el getter para Deadline
+                            aux.getDeadlineR(), 
                             aux.getDurationR(),
                             aux.getSize()
-                        // Nota: Si en tu diseño agregaste una columna para el tamaño en RAM,
-                        // solo añade aquí: aux.getSize()
                         });
                         aux = aux.getNext();
                     }
@@ -968,42 +874,33 @@ public class Dashboard extends javax.swing.JFrame {
                 System.err.println("Advertencia: tablaFinalizados no existe en la interfaz.");
                 return;
             }
-
             DefaultTableModel modelo = (DefaultTableModel) tablaSalida.getModel();
             modelo.setRowCount(0); // Limpiamos la tabla
-
             if (colaFinalizados != null) {
-
-                // ¡CERRAMOS EL CANDADO ANTES DE RECORRER LA COLA!
                 synchronized (scheduler.lock) {
                     com.mycompany.sisoperativos.logic.PCB aux = colaFinalizados.peek();
-
                     while (aux != null) {
                         modelo.addRow(new Object[]{
                             aux.getId(),
                             aux.processName(),
-                            // O el nombre de tu getter para CPU restante
                             aux.getPriority(),
-                            aux.getDeadlineR(), // O el getter para Deadline
+                            aux.getDeadlineR(),
                             aux.getDurationR(),
                             aux.getSize()
                         });
                         aux = aux.getNext();
                     }
-                } // ¡SOLTAMOS EL CANDADO! El simulador puede continuar.
+                } 
             }
-
-            // Actualizamos la barra de progreso al final
             actualizarBarraGlobal();
             actualizarBarrasPromedios();     // <--- AÑADE ESTA LÍNEA AQUÍ
         });
     }
 
-    // 3. Método para actualizar el CPU (Las etiquetas del medio)
+    // Actualizar Display del CPU
     public void updateStatus(int ciclos, com.mycompany.sisoperativos.logic.PCB procesoActual) {
         SwingUtilities.invokeLater(() -> {
             lblReloj.setText("Ciclos: " + ciclos);
-
             // Leemos el proceso actual de forma segura
             synchronized (scheduler.lock) {
                 if (procesoActual != null) {
@@ -1024,7 +921,6 @@ public class Dashboard extends javax.swing.JFrame {
             }
         });
     }
-// Método público para cambiar el Modo del CPU desde otras clases
 
     public void setCpuModo(String modo) {
         SwingUtilities.invokeLater(() -> {

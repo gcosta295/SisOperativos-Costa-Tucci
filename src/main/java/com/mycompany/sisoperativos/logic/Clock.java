@@ -24,29 +24,20 @@ public class Clock implements Runnable {
         return contadorCiclos;
     }
     
-
-    // ... (Tus otros getters y setters los dejo igual) ...
     @Override
     public void run() {
-        while (encendido) { // Mejor usar la variable de control que 'true'
+        while (encendido) { 
             try {
-                // 1. Pausa del ciclo (Fuera del candado para no bloquear el GUI)
+                // Pausa del ciclo (Fuera del candado para no bloquear el GUI)
                 Thread.sleep(duracionCicloMs);
-
-                // 2. Incrementamos el ciclo
-                contadorCiclos++;
+                contadorCiclos++; //Incremento de Ciclo
                 System.out.println(">>> Reloj Tick: " + contadorCiclos);
-
-                // 3. ¡EL CANDADO GLOBAL!
                 // Bloqueamos el planificador completo antes de hacer CUALQUIER cambio
                 synchronized (scheduler.lock) {
-
-                    // --- A. EJECUCIÓN DEL PLANIFICADOR ---
                     scheduler.runExecutionCycle();
                     scheduler.ageAllQueues();
 
-                    // --- B. CREACIÓN DE PROCESOS PERIÓDICOS ---
-                    // Ahora están seguros dentro del candado
+                    // CREACIÓN DE PROCESOS PERIÓDICOS ---
                     if (contadorCiclos % 8 == 0) {
                         crearProcesoPeriodico(2);
                     }
@@ -66,17 +57,13 @@ public class Clock implements Runnable {
                         crearProcesoPeriodico(13);
                     }
 
-                    // (Opcional) Reorganizar colas si tu política lo exige tras insertar nuevos procesos
-                    // scheduler.Organize();
-                } // 4. ¡SOLTAMOS EL CANDADO! 
-                // Ahora la lógica del planificador está a salvo, podemos pintar la interfaz
-
-                // 5. ACTUALIZAR INTERFAZ
-                // (Recuerda que estas funciones en Dashboard DEBEN tener su propio 'synchronized (scheduler.lock)' adentro del invokeLater)
+                   
+                }//fin candado 
+               
+                //actualizar interfaz
                 if (gui != null) {
-                    // Importa javax.swing.SwingUtilities; al inicio de tu archivo
                     javax.swing.SwingUtilities.invokeLater(() -> {
-                        // Todo lo que toca la pantalla DEBE ir aquí adentro
+                        //estas son todas las tablas de las diferentes colas de la interfaz que hay que actualizar
                         gui.updateStatus(contadorCiclos, scheduler.getCurrentProcess());
                         gui.updateReadyQueue(scheduler.getReadyQueue());
                         gui.updateBlockedQueue(scheduler.getBlockedQueue());
@@ -84,9 +71,6 @@ public class Clock implements Runnable {
                         gui.updateSuspendedReadyQueue(scheduler.getSuspendedReadyQueue());
                         gui.updateSuspendedBlockedQueue(scheduler.getSuspendedBlockedQueue());
                         double usoActual = scheduler.getCpuUtilization();
-
-                        // Le pedimos al Dashboard que actualice su monitor
-                        // (Asegúrate de haber creado este método en tu Dashboard.java)
                         gui.getMonitor().updateData(usoActual);
                     });
                 } else {
@@ -95,7 +79,7 @@ public class Clock implements Runnable {
 
             } catch (InterruptedException e) {
                 System.out.println("El reloj fue interrumpido.");
-                break; // Salimos limpiamente si el hilo es interrumpido (ej. al cerrar app)
+                break; 
             } catch (Exception e) {
                 System.err.println("¡CRASH EN EL RELOJ! Motivo:");
                 e.printStackTrace();

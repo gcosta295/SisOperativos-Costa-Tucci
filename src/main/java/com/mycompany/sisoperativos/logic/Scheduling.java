@@ -292,7 +292,6 @@ public class Scheduling {
         }
     }
 
-    //Consulta el modo en el que esta trabajando el CPU
     public boolean manageRAM() {
         synchronized (this.lock) {
             int ramUsada = calcularRamUsada();
@@ -393,8 +392,6 @@ public class Scheduling {
                 estabaEnReady = true;
             }
         }
-
-        // ¡EL TRUCO! Ahora no nos importa qué texto tenga getState()
         // Lo sacamos de la cola correcta usando la bandera.
         PCB extraido;
         if (estabaEnReady) {
@@ -402,30 +399,21 @@ public class Scheduling {
         } else {
             extraido = this.blockedQueue.extractById(victimaElegida.getId());
         }
-
-        // Si por alguna razón anómala extractById falló, imprimimos el error
         if (extraido == null) {
             System.out.println("ERROR CRÍTICO: extractById devolvió null para el ID " + victimaElegida.getId());
         }
-
         return extraido;
     }
 
     private PCB buscarPeorDeadline(Queue q) {
         PCB aux = q.peek();
-
-        // Si la cola está vacía, retornamos null de inmediato
         if (aux == null) {
             return null;
         }
-
-        // Asumimos inicialmente que el primero es el que tiene el "peor" deadline
         PCB peor = aux;
         int maxDeadline = aux.getDeadlineR();
-
         // Empezamos a revisar desde el segundo proceso
         aux = aux.getNext();
-
         while (aux != null) {
             if (aux.getDeadlineR() > maxDeadline) {
                 maxDeadline = aux.getDeadlineR();
@@ -433,21 +421,17 @@ public class Scheduling {
             }
             aux = aux.getNext();
         }
-
         return peor;
     }
 
     private PCB extraerSuspendidoMenorDeadline(int maxTamanoPermitido) {
         PCB mejorSR = buscarMejorSuspendido(this.suspendedReadyQueue, maxTamanoPermitido);
         PCB mejorSB = buscarMejorSuspendido(this.suspendedBlockedQueue, maxTamanoPermitido);
-
         if (mejorSR == null && mejorSB == null) {
             return null;
         }
-
         PCB elegido;
         boolean estabaEnSR = false;
-
         if (mejorSR == null) {
             elegido = mejorSB;
         } else if (mejorSB == null) {
@@ -461,20 +445,17 @@ public class Scheduling {
                 elegido = mejorSB;
             }
         }
-
-        // Extracción segura
         if (estabaEnSR) {
             return this.suspendedReadyQueue.extractById(elegido.getId());
         } else {
             return this.suspendedBlockedQueue.extractById(elegido.getId());
         }
     }
-
+    
     private PCB buscarMejorSuspendido(Queue q, int maxTamanoPermitido) {
         PCB aux = q.peek();
         PCB mejor = null;
         int minDeadline = Integer.MAX_VALUE;
-
         while (aux != null) {
             // Solo lo consideramos si cabe en la RAM (aux.getSize() <= maxTamanoPermitido)
             if (aux.getSize() <= maxTamanoPermitido && aux.getDeadlineR() < minDeadline) {
@@ -486,13 +467,10 @@ public class Scheduling {
         return mejor;
     }
 
-    // Agrégalo en Scheduling.java
     public void ageAllQueues() {
-        // 1. Envejecemos a los que están en RAM
+        //Envejecemos a los que están en RAM y SWAP
         checkAndPurgeDeadlines(this.readyQueue);
         checkAndPurgeDeadlines(this.blockedQueue);
-
-        // 2. ¡EL PARCHE! Envejecemos a los que están en SWAP (Suspendidos)
         checkAndPurgeDeadlines(this.suspendedReadyQueue);
         checkAndPurgeDeadlines(this.suspendedBlockedQueue);
     }
@@ -501,19 +479,14 @@ public class Scheduling {
         if (totalTicks == 0) {
             return 0.0;
         }
-
-        // Forzamos que la operación sea decimal usando 100.0 (con el punto)
-        // O haciendo un cast a (double)
         return ((double) this.busyTicks / this.totalTicks) * 100.0;
     }
 
-    // Método para obtener el Throughput
-// Fórmula: Procesos finalizados / Tiempo total transcurrido
     public double getThroughput() {
         if (totalTicks == 0) {
             return 0;
         }
-        return (double) successFinish / totalTicks;
+        return (double) successFinish / totalTicks; // Fórmula: Procesos finalizados / Tiempo total transcurrido
     }
 
     public double getAvgWaitingTime() {
