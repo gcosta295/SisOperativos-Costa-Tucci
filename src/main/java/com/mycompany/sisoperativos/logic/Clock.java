@@ -20,6 +20,11 @@ public class Clock implements Runnable {
         this.duracionCicloMs = nuevaDuracion;
     }
 
+    public int getContadorCiclos() {
+        return contadorCiclos;
+    }
+    
+
     // ... (Tus otros getters y setters los dejo igual) ...
     @Override
     public void run() {
@@ -78,6 +83,11 @@ public class Clock implements Runnable {
                         gui.updateFinishedQueue(scheduler.getFinishedQueue());
                         gui.updateSuspendedReadyQueue(scheduler.getSuspendedReadyQueue());
                         gui.updateSuspendedBlockedQueue(scheduler.getSuspendedBlockedQueue());
+                        double usoActual = scheduler.getCpuUtilization();
+
+                        // Le pedimos al Dashboard que actualice su monitor
+                        // (Asegúrate de haber creado este método en tu Dashboard.java)
+                        gui.getMonitor().updateData(usoActual);
                     });
                 } else {
                     System.out.println("!!! ERROR: El reloj no tiene conexión con la ventana (gui es null)");
@@ -98,6 +108,6 @@ public class Clock implements Runnable {
     private void crearProcesoPeriodico(int id) {
         Process process = new Process();
         process.getPCB().setId(id);
-        process.periodicProcess(process.getPCB(), scheduler.getReadyQueue(), scheduler.getPolitic());
+        process.periodicProcess(process.getPCB(), scheduler.getReadyQueue(), scheduler.getPolitic(), this.getContadorCiclos());
     }
 }

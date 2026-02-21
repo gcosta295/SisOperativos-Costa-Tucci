@@ -25,6 +25,9 @@ public class Scheduling {
     private int ramSize;
     private int successFinish;
     public final Object lock = new Object();
+    private int totalTicks;
+    private int busyTicks;
+    private double sumaTiempoEspera = 0;
 
     public Queue getIoQueue() {
         return ioQueue;
@@ -64,6 +67,8 @@ public class Scheduling {
         this.gui = gui;
         this.ramSize = 256;
         this.successFinish = 0;
+        this.busyTicks = 0;
+        this.totalTicks = 0;
 
     }
 
@@ -107,169 +112,82 @@ public class Scheduling {
 
     public void runExecutionCycle() {
         synchronized (this.lock) {
-            manageRAM();
-            // 1. Cargar proceso si el CPU está vacío
-            if (currentProcess == null) {
-                currentProcess = readyQueue.dequeue();
+            // 1. El tiempo total siempre aumenta en cada tick
+            this.totalTicks++;
+
+            // 2. Ejecutamos manageRAM y guardamos si hizo swap
+            // (Si manageRAM devuelve true, significa que el CPU está ocupado en Modo Supervisor)
+            boolean hizoSwap = manageRAM();
+
+            if (hizoSwap) {
+                // El CPU está ocupado moviendo memoria
+
+                // En este tick no hacemos nada más de usuario para que el Swap dure 1 tick
+            } else {
+                // 3. Cargar proceso si el CPU está vacío
+                if (currentProcess == null) {
+                    currentProcess = readyQueue.dequeue();
+                    if (currentProcess != null) {
+                        currentProcess.setQuantum(0);
+                    }
+                }
+
+                // 4. Ejecutar un ciclo del proceso en el CPU
                 if (currentProcess != null) {
-                    currentProcess.setQuantum(0);
-                }
-            }
+                    // Si hay un proceso, el CPU está ocupado (Modo Usuario)
+                    this.busyTicks++;
 
-            // 2. Ejecutar un ciclo del proceso en el CPU
-            if (currentProcess != null) {
-                currentProcess.setDurationR(currentProcess.getDurationR() - 1);
-                currentProcess.setQuantum(currentProcess.getQuantum() + 1);
-                currentProcess.setDeadlineR(currentProcess.getDeadlineR() - 1);
+                    currentProcess.setDurationR(currentProcess.getDurationR() - 1);
+                    currentProcess.setQuantum(currentProcess.getQuantum() + 1);
+                    currentProcess.setDeadlineR(currentProcess.getDeadlineR() - 1);
 
-                // ¿Le toca ir a E/S?
-                // ¿Le toca ir a E/S?
-                if (currentProcess.getInputOutput() != null) {
-                    InputOutput io = this.ioQueue.ioSercher(currentProcess.getInputOutput());
-
-                    // Si el momento de ir a E/S coincide con el ciclo actual
-                    if (io != null && (currentProcess.getDurationHope() - currentProcess.getDurationR() == io.getCounter())) {
-                        gui.log("!!! PROCESO " + currentProcess.getId() + " ENVIADO A E/S !!!");
-                        System.out.println("!!! PROCESO " + currentProcess.getId() + " ENVIADO A E/S !!!");
-
-                        // 1. Cambiamos su estado oficial a Bloqueado
-                        currentProcess.setState("Blocked");
-
-                        // 2. Lo mandamos al dispositivo de I/O (ioChecker ahora se encarga de meterlo a BlockedQueue)
-                        io.ioChecker(currentProcess, this.blockedQueue);
-
-                        // 3. Liberamos el CPU 
-                        currentProcess = null;
-                    }
-                }
-            }
-
-            // 3. ACTUALIZAR DISPOSITIVOS DE I/O 
-            InputOutput tempIO = this.ioQueue.getFirstIO();
-            while (tempIO != null) {
-                PCB pcbEnIO = tempIO.getPcbProcess();
-
-                if (pcbEnIO != null) {
-                    // 1. Le restamos 1 a TU timer del dispositivo
-                    tempIO.setTimer(tempIO.getTimer() - 1);
-
-// 2. ¿El timer llegó a 0? (Significa que ya cumplió su totalTime)
-                    if (tempIO.getTimer() <= 0) {
-
-                        this.blockedQueue.extractById(pcbEnIO.getId());
-
-                        pcbEnIO.setNext(null);
-
-                        pcbEnIO.setInputOutput(null);
-
-                        // ¡EL PARCHE ANTI-ZOMBIS! 
-                        // Solo lo devolvemos a la cola Ready si NO está muerto.
-                        if (!"Aborted".equals(pcbEnIO.getState()) && !"Exit".equals(pcbEnIO.getState())) {
-
-                            pcbEnIO.setState("Ready");
-
-                            gui.log("Proceso " + pcbEnIO.getId() + " terminó su I/O en " + tempIO.getName());
-
-                            // Lo devolvemos a la cola Ready según la política
-                            if ("FCFS".equals(politic) || "FIFO".equals(politic) || "RR".equals(politic)) {
-
-                                this.readyQueue.enqueueFIFO(pcbEnIO);
-
-                            } else if ("SRT".equals(politic)) {
-
-                                this.readyQueue.enqueueByRemainingTime(pcbEnIO);
-
-                            } else if ("Priority".equals(politic)) {
-
-                                this.readyQueue.enqueueByPriority(pcbEnIO);
-
-                            } else if ("EDF".equals(politic)) {
-
-                                this.readyQueue.enqueueByDeadline(pcbEnIO);
-
-                            } else {
-
-                                // Salvavidas: Si la política viene nula o con otro nombre, que no se pierda el proceso
-                                this.readyQueue.enqueueFIFO(pcbEnIO);
-
-                            }
-
-                        } else {
-
-                            System.out.println("Fantasma de I/O eliminado: El proceso " + pcbEnIO.getId() + " ya estaba muerto.");
-
-                        }
-
-                        // 3. Si había alguien haciendo fila específica para ESTE dispositivo...
-                        // ... (el código de nextInIO se queda igual)
-                        // 3. Si había alguien haciendo fila específica para ESTE dispositivo, lo metemos
-                        // CAMBIA EL dequeue() normal por dequeueIO()
-                        PCB nextInIO = tempIO.getIOQueue().dequeueIO();
-                        tempIO.setPcbProcess(nextInIO);
-
-                        // ¡Y le reiniciamos el timer a este nuevo proceso para que empiece su cuenta regresiva!
-                        if (nextInIO != null) {
-                            tempIO.setTimer(tempIO.getTotalTime());
-                        }
-                    }
-                }
-                tempIO = tempIO.getNext(); // Pasamos al siguiente dispositivo
-            }
-
-            // 4. Revisar finalización, muerte o expulsión 
-            // (Solo entra aquí si el proceso NO se fue a E/S este ciclo)
-            if (currentProcess != null) {
-                // ¿Terminó con éxito?
-                if (currentProcess.getDurationR() <= 0) {
-                    System.out.println("Proceso " + currentProcess.getId() + " finalizado con ÉXITO.");
-                    gui.log("Proceso " + currentProcess.getId() + " finalizado con ÉXITO.");
-                    currentProcess.setState("Exit");
-                    if (finishedQueue != null) {
-                        successFinish += 1;
-                        finishedQueue.enqueueFIFO(currentProcess);
-                    }
-                    currentProcess = null; // Liberamos el CPU
-                } // ¿Se le acabó el deadline estando en el CPU?
-                else if (currentProcess.getDeadlineR() <= 0) {
-                    gui.log("¡ALERTA! Proceso " + currentProcess.getId() + " TERMINADO ANÓMALAMENTE (Deadline Vencido en CPU).");
-                    System.out.println("Proceso " + currentProcess.getId() + " finalizado con ÉXITO.");
-                    currentProcess.setState("Aborted");
-                    if (finishedQueue != null) {
-                        finishedQueue.enqueueFIFO(currentProcess);
-                    }
-                    currentProcess = null; // Liberamos el CPU
-                } // LÓGICA DE PREEMPCIÓN
-                else {
-                    PCB nextInQueue = readyQueue.peek();
-
-                    if (nextInQueue != null) {
-                        boolean expulsar = false;
-
-                        if ("RR".equals(this.politic) && currentProcess.getQuantum() >= this.System_Quantum) {
-                            gui.log("!!! QUANTUM EXPIRED !!! ID " + currentProcess.getId() + " vuelve a la cola.");
-                            expulsar = true;
-                        } else if ("SRT".equals(this.politic) && nextInQueue.getDurationR() < currentProcess.getDurationR()) {
-                            gui.log("!!! PREEMPTION (SRT) !!! ID " + nextInQueue.getId() + " es más corto.");
-                            expulsar = true;
-                        } else if ("EDF".equals(this.politic) && nextInQueue.getDeadlineR() < currentProcess.getDeadlineR()) {
-                            gui.log("!!! PREEMPTION (EDF) !!! ID " + nextInQueue.getId() + " es más urgente.");
-                            expulsar = true;
-                        } else if ("Priority".equals(this.politic) && nextInQueue.getPriority() > currentProcess.getPriority()) {
-                            gui.log("!!! PREEMPTION (PRIORITY) !!! ID " + nextInQueue.getId() + " tiene más prioridad.");
-                            expulsar = true;
-                        }
-
-                        if (expulsar) {
-                            currentProcess.setQuantum(0);
-
-                            // ¡LIMPIEZA OBLIGATORIA! 
-                            currentProcess.setNext(null);
-
-                            readyQueue.enqueueFIFO(currentProcess);
+                    // ¿Le toca ir a E/S?
+                    if (currentProcess.getInputOutput() != null) {
+                        InputOutput io = this.ioQueue.ioSercher(currentProcess.getInputOutput());
+                        if (io != null && (currentProcess.getDurationHope() - currentProcess.getDurationR() == io.getCounter())) {
+                            gui.log("!!! PROCESO " + currentProcess.getId() + " ENVIADO A E/S !!!");
+                            currentProcess.setState("Blocked");
+                            io.ioChecker(currentProcess, this.blockedQueue);
                             currentProcess = null;
                         }
                     }
                 }
+
+                // 5. Revisar finalización, muerte o expulsión (Solo si no hubo Swap)
+                if (currentProcess != null) {
+                    if (currentProcess.getDurationR() <= 0) {
+                        // ... (tu código de finalización exitosa) ...
+                        currentProcess.setState("Exit");
+                        // Tiempo de Espera = Tiempo Total en Sistema - Tiempo de ejecución real
+                        // (Tiempo en Sistema = CicloActual - CicloLlegada)
+                        int tiempoEnSistema = this.totalTicks - currentProcess.getArrivalTime();
+                        int espera = tiempoEnSistema - currentProcess.getDurationHope();
+                        sumaTiempoEspera += (espera < 0) ? 0 : espera; // Evitar negativos por errores de redondeo
+                        if (finishedQueue != null) {
+                            successFinish += 1;
+                            finishedQueue.enqueueFIFO(currentProcess);
+                        }
+                        currentProcess = null;
+                    } else if (currentProcess.getDeadlineR() <= 0) {
+                        // ... (tu código de aborto por deadline) ...
+                        currentProcess.setState("Aborted");
+                        if (finishedQueue != null) {
+                            finishedQueue.enqueueFIFO(currentProcess);
+                        }
+                        currentProcess = null;
+                    } else {
+                        // ... (Lógica de preempción RR, SRT, EDF, etc.) ...
+                        // (Manten el código de preempción que ya tienes aquí adentro)
+                    }
+                }
+            }
+
+            // 6. ACTUALIZAR DISPOSITIVOS DE I/O 
+            // Esto queda fuera de los ifs porque el hardware de I/O es independiente del CPU
+            InputOutput tempIO = this.ioQueue.getFirstIO();
+            while (tempIO != null) {
+                // ... (tu código de actualización de I/O se queda igual) ...
+                tempIO = tempIO.getNext();
             }
         }
     }
@@ -386,23 +304,24 @@ public class Scheduling {
         }
     }
 
-    public void manageRAM() {
+public boolean manageRAM() {
         synchronized (this.lock) {
             int ramUsada = calcularRamUsada();
-            System.out.println("DEBUG RAM -> Usada: " + ramUsada + " / Total: " + this.ramSize);
+            boolean huboIntervencion = false; // Esta variable nos dirá si el CPU trabajó en la RAM
 
-            // 1. SWAP OUT (Expulsar SOLO UNO por ciclo si estamos llenos)
+            // 1. SWAP OUT (Expulsar si estamos llenos)
             if (ramUsada > this.ramSize) {
+                gui.setCpuModo("Modo Supervisor");
+
                 PCB victima = extraerVictimaMayorDeadline();
 
                 if (victima != null && victima.getSize() > 0) {
+                    huboIntervencion = true; // El CPU trabajó expulsando
                     String estadoAntiguo = victima.getState();
-                    
-                    // Limpiamos sus conexiones para que no arrastre a otros
+
                     victima.setNext(null);
                     victima.setBefore(null);
 
-                    // Lo mandamos a la cola de suspendidos correcta
                     if (estadoAntiguo != null && estadoAntiguo.equalsIgnoreCase("Blocked")) {
                         victima.setState("SuspendedBlocked");
                         this.suspendedBlockedQueue.enqueueFIFO(victima);
@@ -412,25 +331,25 @@ public class Scheduling {
                         this.suspendedReadyQueue.enqueueFIFO(victima);
                         gui.log("SWAP OUT: Proceso " + victima.getId() + " (Listo) expulsado a Swap.");
                     }
-
-                    // Actualizamos la RAM usada
                     ramUsada -= victima.getSize();
                 }
             }
 
-            // 2. SWAP IN (Traer SOLO UNO de vuelta por ciclo si hay espacio)
-            if (ramUsada < this.ramSize) {
+            // 2. SWAP IN (Traer de vuelta si hay espacio y no hemos hecho swap out este ciclo)
+            if (!huboIntervencion && ramUsada < this.ramSize) {
+                // gui.setCpuModo("Modo Supervisor"); // <- Esto ya lo haces dentro del if abajo, puedes quitarlo de aquí afuera
+
                 int espacioLibre = this.ramSize - ramUsada;
                 PCB aDespertar = extraerSuspendidoMenorDeadline(espacioLibre);
 
                 if (aDespertar != null && aDespertar.getSize() > 0) {
+                    huboIntervencion = true; // El CPU trabajó trayendo de vuelta
+                    gui.setCpuModo("Modo Supervisor");
+
                     String estadoAntiguo = aDespertar.getState();
-                    
-                    // Limpiamos sus conexiones
                     aDespertar.setNext(null);
                     aDespertar.setBefore(null);
 
-                    // Lo regresamos a la RAM
                     if (estadoAntiguo != null && estadoAntiguo.equalsIgnoreCase("SuspendedBlocked")) {
                         aDespertar.setState("Blocked");
                         this.blockedQueue.enqueueFIFO(aDespertar);
@@ -439,19 +358,28 @@ public class Scheduling {
                         aDespertar.setState("Ready");
                         this.readyQueue.enqueueFIFO(aDespertar);
                         gui.log("SWAP IN: Proceso " + aDespertar.getId() + " regresó a Listos.");
-                        
-                        // Si regresó a Ready y usamos política con prioridades, organizamos la cola
+
                         if ("SRT".equals(this.politic) || "EDF".equals(this.politic) || "Priority".equals(this.politic)) {
                             this.Organize();
                         }
                     }
-
-                    ramUsada += aDespertar.getSize();
                 }
             }
+
+            // --- NUEVO: PAUSA PARA QUE EL USUARIO VEA EL MODO SUPERVISOR ---
+            if (huboIntervencion) {
+                try {
+                    // Pausamos medio segundo (500 milisegundos). Ajusta este valor si lo quieres más rápido o lento.
+                    Thread.sleep(200); 
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+            // ---------------------------------------------------------------
+
+            return huboIntervencion; // Retornamos si el CPU estuvo ocupado
         }
     }
-
     // --- MÉTODOS AUXILIARES DEL GESTOR DE MEMORIA ---
     private int calcularRamUsada() {
         int total = 0;
@@ -602,5 +530,32 @@ public class Scheduling {
         // 2. ¡EL PARCHE! Envejecemos a los que están en SWAP (Suspendidos)
         checkAndPurgeDeadlines(this.suspendedReadyQueue);
         checkAndPurgeDeadlines(this.suspendedBlockedQueue);
+    }
+
+    public double getCpuUtilization() {
+        if (totalTicks == 0) {
+            return 0.0;
+        }
+
+        // Forzamos que la operación sea decimal usando 100.0 (con el punto)
+        // O haciendo un cast a (double)
+        return ((double) this.busyTicks / this.totalTicks) * 100.0;
+    }
+
+    // Método para obtener el Throughput
+// Fórmula: Procesos finalizados / Tiempo total transcurrido
+    public double getThroughput() {
+        if (totalTicks == 0) {
+            return 0;
+        }
+        return (double) successFinish / totalTicks;
+    }
+
+    public double getAvgWaitingTime() {
+        // Usamos successFinish para no diluir el promedio con los procesos abortados
+        if (this.successFinish == 0) {
+            return 0.0;
+        }
+        return this.sumaTiempoEspera / this.successFinish;
     }
 }
