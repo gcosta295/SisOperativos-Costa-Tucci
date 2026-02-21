@@ -50,6 +50,7 @@ public class Process {
         this.processName = null;
     }
 
+    //Toma el ID del PCB y en funciona eso detecta que proceso es
     public void periodicProcess(PCB pcb, Queue newQueue, String politic, int arrivalTime) {
         int id = pcb.getId();
         boolean flag = true;
@@ -117,6 +118,8 @@ public class Process {
             this.PCB.setArrivalTime(arrivalTime);
 
         }
+        //Probabilidad de 5% aprox de generar un proceso aperiodico
+        //Se tomaron 5 numeros primos aleatorios entre 100 y 150
         if ((id % 107 == 0) || (id % 113 == 0) || (id % 139 == 0) || (id % 101 == 0) || (id % 127 == 0)) {
             Process aperiodicP = new Process();
             aperiodicP.aperiodicProcess(false, newQueue, politic, arrivalTime);
@@ -125,10 +128,12 @@ public class Process {
         this.enqueue(politic, newQueue, pcb);
     }
 
+    //Generador de tareas aperiodicas mediante el ID
+    //Tambien puede generar lotes como el del boton de los 20 eventos
     public void aperiodicProcess(boolean flag, Queue newQueue, String politic, int arrivalTime) {
         int id = this.PCB.getId();
         if (flag) {
-            int counter = 10;
+            int counter = 20;
             while (counter > 0) {
                 Process aperiodicButton = new Process();
                 aperiodicButton.aperiodicProcess(false, newQueue, politic, arrivalTime);
@@ -148,7 +153,6 @@ public class Process {
                     this.PCB.setSize(150);
                     this.PCB.setPriority(4);
                     this.PCB.setArrivalTime(arrivalTime);
-
                 }
                 if (flag) {
                     flag = false;
@@ -160,7 +164,6 @@ public class Process {
                     this.PCB.setSize(15);
                     this.PCB.setPriority(4);
                     this.PCB.setArrivalTime(arrivalTime);
-
                 }
             } else {
                 flag = true;
@@ -175,7 +178,6 @@ public class Process {
                     this.PCB.setSize(80);
                     this.PCB.setPriority(7);
                     this.PCB.setArrivalTime(arrivalTime);
-
                 }
                 if ((id % 5 == 0) && (flag)) {
                     flag = false;
@@ -187,7 +189,6 @@ public class Process {
                     this.PCB.setSize(1);
                     this.PCB.setPriority(7);
                     this.PCB.setArrivalTime(arrivalTime);
-
                 }
                 if ((id % 7 == 0) && (flag)) {
                     flag = false;
@@ -198,7 +199,6 @@ public class Process {
                     this.deadLine = 258;
                     this.PCB.setSize(10);
                     this.PCB.setArrivalTime(arrivalTime);
-
                     this.PCB.setPriority(7);
                 }
                 if (flag) {
@@ -211,7 +211,6 @@ public class Process {
                     this.PCB.setSize(150);
                     this.PCB.setPriority(7);
                     this.PCB.setArrivalTime(arrivalTime);
-
                 }
             }
             this.pcbUpdate();
@@ -219,14 +218,15 @@ public class Process {
         }
     }
 
+    //Selecciona el metodo de encolamiento en base a la politica
     public void enqueue(String politic, Queue newQueue, PCB pcb) {
-        if (politic == "FIFO" || politic == "RR") {
+        if (politic.equals("FIFO") || politic.equals("RR")) {
             newQueue.enqueueFIFO(pcb);
-        } else if (politic == "SRT") {
+        } else if (politic.equals("SRT")) {
             newQueue.enqueueByRemainingTime(pcb);
-        } else if (politic == "Priority") {
+        } else if (politic.equals("Priority")) {
             newQueue.enqueueByPriority(pcb);
-        } else if (politic == "EDF") {
+        } else if (politic.equals("EDF")) {
             newQueue.enqueueByDeadline(pcb);
         }
     }

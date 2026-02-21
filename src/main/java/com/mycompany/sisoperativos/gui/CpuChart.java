@@ -13,8 +13,8 @@ import java.awt.*;
  */
 public class CpuChart extends JPanel {
 
-    private double[] history = new double[50];
-    private int puntosActuales = 0;
+    private double[] history = new double[50]; //guarda los ultimos 50 porcentajes de uso del CPU
+    private int puntosActuales = 0; //sabe cuantos datos hemos metido en la grafica desde el comienzo
 
     /**
      * Creates new form CpuChart
@@ -34,14 +34,14 @@ public class CpuChart extends JPanel {
             }
             history[history.length - 1] = utilization;
         }
-        repaint();
+        repaint(); //analiza los datos nuevos y pinta el punto nuevo
     }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON); //que se vean bonitas las lineas
 
         int w = getWidth();
         int h = getHeight();

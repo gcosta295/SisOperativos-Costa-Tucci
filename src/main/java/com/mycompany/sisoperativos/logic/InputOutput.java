@@ -138,18 +138,14 @@ public class InputOutput {
         }
     }
 
+    //Chequea si el IO device esta ocupado 
     public void ioChecker(PCB pcb, Queue queue) {
         if (this.pcbProcess == null) {
             this.pcbProcess = pcb;
             this.timer = this.totalTime;
-
-            // Va a la general usando el puntero normal
             queue.enqueueFIFO(pcb);
         } else {
-            // ¡MAGIA! Va a la cola del dispositivo usando el hilo secundario...
             this.IOQueue.enqueueIO(pcb);
-
-            // ...Y TAMBIÉN va a la general usando el hilo principal
             queue.enqueueFIFO(pcb);
         }
     }
