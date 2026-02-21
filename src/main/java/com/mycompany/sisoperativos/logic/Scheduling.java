@@ -33,15 +33,6 @@ public class Scheduling {
         return ioQueue;
     }
 
-    public void setIoQueue(Queue ioQueue) {
-        this.ioQueue = ioQueue;
-    }
-
-    public void setSystem_Quantum(int System_Quantum) {
-        this.System_Quantum = System_Quantum;
-
-    }
-
     public Queue getSuspendedReadyQueue() {
         return this.suspendedReadyQueue;
     }
@@ -52,6 +43,15 @@ public class Scheduling {
 
     public int getSystem_Quantum() {
         return System_Quantum;
+    }
+
+    public void setIoQueue(Queue ioQueue) {
+        this.ioQueue = ioQueue;
+    }
+
+    public void setSystem_Quantum(int System_Quantum) {
+        this.System_Quantum = System_Quantum;
+
     }
 
     public Scheduling(Dashboard gui) {
@@ -69,7 +69,6 @@ public class Scheduling {
         this.successFinish = 0;
         this.busyTicks = 0;
         this.totalTicks = 0;
-
     }
 
     public Queue getFinishedQueue() {
@@ -87,9 +86,12 @@ public class Scheduling {
 
     public void Organize() {
         synchronized (this.lock) {
+            //Chequeo de que existan procesos a ejecutar y ninguno ejecutandose
             if (this.readyQueue.getLen() == 0 && this.currentProcess == null) {
                 return;
             }
+            //Se crea una cola temporal y elemento a elemento se agrega
+            //segun su politica de ordenamiento 
             Queue newQueue = new Queue();
             PCB aux = readyQueue.dequeue();
             while (aux != null) {
@@ -100,48 +102,32 @@ public class Scheduling {
                 } else if ("Priority".equals(this.politic)) {
                     newQueue.enqueueByPriority(aux);
                 } else {
-                    // Para RR y FIFO usamos FIFO simple
                     newQueue.enqueueFIFO(aux);
                 }
                 aux = readyQueue.dequeue();
             }
-            // IMPORTANTE: Reemplazar la cola vieja con la nueva ya ordenada
+            //Se reasigna la cola de listos con la nueva cola organizada
             this.readyQueue = newQueue;
         }
     }
 
     public void runExecutionCycle() {
         synchronized (this.lock) {
-            // 1. El tiempo total siempre aumenta en cada tick
             this.totalTicks++;
-
-            // 2. Ejecutamos manageRAM y guardamos si hizo swap
-            // (Si manageRAM devuelve true, significa que el CPU está ocupado en Modo Supervisor)
             boolean hizoSwap = manageRAM();
-
             if (hizoSwap) {
-                // El CPU está ocupado moviendo memoria
-
-                // En este tick no hacemos nada más de usuario para que el Swap dure 1 tick
             } else {
-                // 3. Cargar proceso si el CPU está vacío
                 if (currentProcess == null) {
                     currentProcess = readyQueue.dequeue();
                     if (currentProcess != null) {
                         currentProcess.setQuantum(0);
                     }
                 }
-
-                // 4. Ejecutar un ciclo del proceso en el CPU
                 if (currentProcess != null) {
-                    // Si hay un proceso, el CPU está ocupado (Modo Usuario)
                     this.busyTicks++;
-
                     currentProcess.setDurationR(currentProcess.getDurationR() - 1);
                     currentProcess.setQuantum(currentProcess.getQuantum() + 1);
                     currentProcess.setDeadlineR(currentProcess.getDeadlineR() - 1);
-
-                    // ¿Le toca ir a E/S?
                     if (currentProcess.getInputOutput() != null) {
                         InputOutput io = this.ioQueue.ioSercher(currentProcess.getInputOutput());
                         if (io != null && (currentProcess.getDurationHope() - currentProcess.getDurationR() == io.getCounter())) {
@@ -152,41 +138,29 @@ public class Scheduling {
                         }
                     }
                 }
-
-                // 5. Revisar finalización, muerte o expulsión (Solo si no hubo Swap)
                 if (currentProcess != null) {
                     if (currentProcess.getDurationR() <= 0) {
-                        // ... (tu código de finalización exitosa) ...
                         currentProcess.setState("Exit");
-                        // Tiempo de Espera = Tiempo Total en Sistema - Tiempo de ejecución real
-                        // (Tiempo en Sistema = CicloActual - CicloLlegada)
                         int tiempoEnSistema = this.totalTicks - currentProcess.getArrivalTime();
                         int espera = tiempoEnSistema - currentProcess.getDurationHope();
-                        sumaTiempoEspera += (espera < 0) ? 0 : espera; // Evitar negativos por errores de redondeo
+                        sumaTiempoEspera += (espera < 0) ? 0 : espera;
                         if (finishedQueue != null) {
                             successFinish += 1;
                             finishedQueue.enqueueFIFO(currentProcess);
                         }
                         currentProcess = null;
                     } else if (currentProcess.getDeadlineR() <= 0) {
-                        // ... (tu código de aborto por deadline) ...
                         currentProcess.setState("Aborted");
                         if (finishedQueue != null) {
                             finishedQueue.enqueueFIFO(currentProcess);
                         }
                         currentProcess = null;
                     } else {
-                        // ... (Lógica de preempción RR, SRT, EDF, etc.) ...
-                        // (Manten el código de preempción que ya tienes aquí adentro)
                     }
                 }
             }
-
-            // 6. ACTUALIZAR DISPOSITIVOS DE I/O 
-            // Esto queda fuera de los ifs porque el hardware de I/O es independiente del CPU
             InputOutput tempIO = this.ioQueue.getFirstIO();
             while (tempIO != null) {
-                // ... (tu código de actualización de I/O se queda igual) ...
                 tempIO = tempIO.getNext();
             }
         }
