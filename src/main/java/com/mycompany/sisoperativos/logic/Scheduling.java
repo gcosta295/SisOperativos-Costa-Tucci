@@ -27,6 +27,7 @@ public class Scheduling {
     public final Object lock = new Object();
     private int totalTicks;
     private int busyTicks;
+    private double sumaTiempoEspera = 0;
 
     public Queue getIoQueue() {
         return ioQueue;
@@ -109,10 +110,10 @@ public class Scheduling {
         }
     }
 
-public void runExecutionCycle() {
+    public void runExecutionCycle() {
         synchronized (this.lock) {
             // 1. El tiempo total siempre aumenta en cada tick
-            this.totalTicks++; 
+            this.totalTicks++;
 
             // 2. Ejecutamos manageRAM y guardamos si hizo swap
             // (Si manageRAM devuelve true, significa que el CPU está ocupado en Modo Supervisor)
@@ -120,7 +121,7 @@ public void runExecutionCycle() {
 
             if (hizoSwap) {
                 // El CPU está ocupado moviendo memoria
-                
+
                 // En este tick no hacemos nada más de usuario para que el Swap dure 1 tick
             } else {
                 // 3. Cargar proceso si el CPU está vacío
@@ -134,7 +135,7 @@ public void runExecutionCycle() {
                 // 4. Ejecutar un ciclo del proceso en el CPU
                 if (currentProcess != null) {
                     // Si hay un proceso, el CPU está ocupado (Modo Usuario)
-                    this.busyTicks++; 
+                    this.busyTicks++;
 
                     currentProcess.setDurationR(currentProcess.getDurationR() - 1);
                     currentProcess.setQuantum(currentProcess.getQuantum() + 1);
@@ -151,27 +152,30 @@ public void runExecutionCycle() {
                         }
                     }
                 }
-                
+
                 // 5. Revisar finalización, muerte o expulsión (Solo si no hubo Swap)
                 if (currentProcess != null) {
                     if (currentProcess.getDurationR() <= 0) {
                         // ... (tu código de finalización exitosa) ...
                         currentProcess.setState("Exit");
+                        // Tiempo de Espera = Tiempo Total en Sistema - Tiempo de ejecución real
+                        // (Tiempo en Sistema = CicloActual - CicloLlegada)
+                        int tiempoEnSistema = this.totalTicks - currentProcess.getArrivalTime();
+                        int espera = tiempoEnSistema - currentProcess.getDurationHope();
+                        sumaTiempoEspera += (espera < 0) ? 0 : espera; // Evitar negativos por errores de redondeo
                         if (finishedQueue != null) {
                             successFinish += 1;
                             finishedQueue.enqueueFIFO(currentProcess);
                         }
                         currentProcess = null;
-                    } 
-                    else if (currentProcess.getDeadlineR() <= 0) {
+                    } else if (currentProcess.getDeadlineR() <= 0) {
                         // ... (tu código de aborto por deadline) ...
                         currentProcess.setState("Aborted");
                         if (finishedQueue != null) {
                             finishedQueue.enqueueFIFO(currentProcess);
                         }
                         currentProcess = null;
-                    } 
-                    else {
+                    } else {
                         // ... (Lógica de preempción RR, SRT, EDF, etc.) ...
                         // (Manten el código de preempción que ya tienes aquí adentro)
                     }
@@ -187,6 +191,7 @@ public void runExecutionCycle() {
             }
         }
     }
+
     public Queue getReadyQueue() {
         return this.readyQueue;
     }
@@ -307,7 +312,7 @@ public boolean manageRAM() {
             // 1. SWAP OUT (Expulsar si estamos llenos)
             if (ramUsada > this.ramSize) {
                 gui.setCpuModo("Modo Supervisor");
-                
+
                 PCB victima = extraerVictimaMayorDeadline();
 
                 if (victima != null && victima.getSize() > 0) {
@@ -331,15 +336,16 @@ public boolean manageRAM() {
             }
 
             // 2. SWAP IN (Traer de vuelta si hay espacio y no hemos hecho swap out este ciclo)
-            // Agregamos "!huboIntervencion" para que solo haga UNA acción por tick (más realista)
             if (!huboIntervencion && ramUsada < this.ramSize) {
+                // gui.setCpuModo("Modo Supervisor"); // <- Esto ya lo haces dentro del if abajo, puedes quitarlo de aquí afuera
+
                 int espacioLibre = this.ramSize - ramUsada;
                 PCB aDespertar = extraerSuspendidoMenorDeadline(espacioLibre);
 
                 if (aDespertar != null && aDespertar.getSize() > 0) {
                     huboIntervencion = true; // El CPU trabajó trayendo de vuelta
                     gui.setCpuModo("Modo Supervisor");
-                    
+
                     String estadoAntiguo = aDespertar.getState();
                     aDespertar.setNext(null);
                     aDespertar.setBefore(null);
@@ -359,7 +365,18 @@ public boolean manageRAM() {
                     }
                 }
             }
-            
+
+            // --- NUEVO: PAUSA PARA QUE EL USUARIO VEA EL MODO SUPERVISOR ---
+            if (huboIntervencion) {
+                try {
+                    // Pausamos medio segundo (500 milisegundos). Ajusta este valor si lo quieres más rápido o lento.
+                    Thread.sleep(200); 
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+            // ---------------------------------------------------------------
+
             return huboIntervencion; // Retornamos si el CPU estuvo ocupado
         }
     }
@@ -515,12 +532,30 @@ public boolean manageRAM() {
         checkAndPurgeDeadlines(this.suspendedBlockedQueue);
     }
 
-   public double getCpuUtilization() {
-    if (totalTicks == 0) return 0.0;
-    
-    // Forzamos que la operación sea decimal usando 100.0 (con el punto)
-    // O haciendo un cast a (double)
-    return ((double) this.busyTicks / this.totalTicks) * 100.0;
-}
+    public double getCpuUtilization() {
+        if (totalTicks == 0) {
+            return 0.0;
+        }
 
+        // Forzamos que la operación sea decimal usando 100.0 (con el punto)
+        // O haciendo un cast a (double)
+        return ((double) this.busyTicks / this.totalTicks) * 100.0;
+    }
+
+    // Método para obtener el Throughput
+// Fórmula: Procesos finalizados / Tiempo total transcurrido
+    public double getThroughput() {
+        if (totalTicks == 0) {
+            return 0;
+        }
+        return (double) successFinish / totalTicks;
+    }
+
+    public double getAvgWaitingTime() {
+        // Usamos successFinish para no diluir el promedio con los procesos abortados
+        if (this.successFinish == 0) {
+            return 0.0;
+        }
+        return this.sumaTiempoEspera / this.successFinish;
+    }
 }

@@ -49,6 +49,7 @@ public class Dashboard extends javax.swing.JFrame {
             indexIO -= 1;
         }
         int counter = 6;
+        simClock = new Clock(1000, scheduler, this);
         while (counter > 0) {
             Process process = new Process();
             if (counter == 6) {
@@ -69,11 +70,10 @@ public class Dashboard extends javax.swing.JFrame {
             if (counter == 1) {
                 process.getPCB().setId(13);
             }
-            process.periodicProcess(process.getPCB(), scheduler.getReadyQueue(), scheduler.getPolitic());
+            process.periodicProcess(process.getPCB(), scheduler.getReadyQueue(), scheduler.getPolitic(), simClock.getContadorCiclos());
             counter -= 1;
         }
         // 3. ¡IMPORTANTE! Creamos el reloj y le pasamos "this" (esta ventana)
-        simClock = new Clock(1000, scheduler, this);
     }
 
     /**
@@ -122,8 +122,9 @@ public class Dashboard extends javax.swing.JFrame {
         jScrollPane7 = new javax.swing.JScrollPane();
         tablaSusBloqueados = new javax.swing.JTable();
         jLabel3 = new javax.swing.JLabel();
-        barraProgreso1 = new javax.swing.JProgressBar();
+        barraThroughput = new javax.swing.JProgressBar();
         grafica = new javax.swing.JButton();
+        barraWaitTime = new javax.swing.JProgressBar();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -465,23 +466,30 @@ public class Dashboard extends javax.swing.JFrame {
                 .addGap(18, 18, 18))
         );
 
-        barraProgreso1.setBackground(new java.awt.Color(204, 255, 255));
-        barraProgreso1.setFont(new java.awt.Font("Segoe UI", 1, 10)); // NOI18N
-        barraProgreso1.setForeground(new java.awt.Color(0, 102, 102));
-        barraProgreso1.setOpaque(true);
-        barraProgreso1.setStringPainted(true);
-        barraProgreso1.addChangeListener(this::barraProgreso1StateChanged);
+        barraThroughput.setBackground(new java.awt.Color(255, 178, 255));
+        barraThroughput.setFont(new java.awt.Font("Segoe UI", 1, 10)); // NOI18N
+        barraThroughput.setForeground(new java.awt.Color(255, 0, 204));
+        barraThroughput.setOpaque(true);
+        barraThroughput.setStringPainted(true);
+        barraThroughput.addChangeListener(this::barraThroughputStateChanged);
 
         grafica.setFont(new java.awt.Font("Swis721 LtCn BT", 0, 14)); // NOI18N
         grafica.setText("Grafica");
         grafica.addActionListener(this::graficaActionPerformed);
+
+        barraWaitTime.setBackground(new java.awt.Color(255, 240, 213));
+        barraWaitTime.setFont(new java.awt.Font("Segoe UI", 1, 10)); // NOI18N
+        barraWaitTime.setForeground(new java.awt.Color(255, 102, 51));
+        barraWaitTime.setOpaque(true);
+        barraWaitTime.setStringPainted(true);
+        barraWaitTime.addChangeListener(this::barraWaitTimeStateChanged);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(42, 42, 42)
+                .addGap(27, 27, 27)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -514,7 +522,8 @@ public class Dashboard extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(barraProgreso, javax.swing.GroupLayout.PREFERRED_SIZE, 231, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(barraProgreso1, javax.swing.GroupLayout.PREFERRED_SIZE, 231, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(barraThroughput, javax.swing.GroupLayout.PREFERRED_SIZE, 231, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(barraWaitTime, javax.swing.GroupLayout.PREFERRED_SIZE, 231, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -552,9 +561,11 @@ public class Dashboard extends javax.swing.JFrame {
                     .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jPanel6, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(barraProgreso, javax.swing.GroupLayout.PREFERRED_SIZE, 53, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(barraProgreso1, javax.swing.GroupLayout.PREFERRED_SIZE, 53, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(barraProgreso, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(barraThroughput, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(39, 39, 39)
+                        .addComponent(barraWaitTime, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(panel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap(81, Short.MAX_VALUE))
         );
@@ -609,7 +620,7 @@ public class Dashboard extends javax.swing.JFrame {
                         synchronized (scheduler.lock) {
 
                             // Intentamos configurarlo y encolarlo
-                            newP.aperiodicProcess(false, scheduler.getReadyQueue(), scheduler.getPolitic());
+                            newP.aperiodicProcess(false, scheduler.getReadyQueue(), scheduler.getPolitic(), simClock.getContadorCiclos());
                             System.out.println(">>> Proceso " + i + " encolado correctamente.");
 
                             // Si tu simulador requiere reordenar (Priority, SRT, EDF), descomenta esto:
@@ -669,7 +680,7 @@ public class Dashboard extends javax.swing.JFrame {
                     synchronized (scheduler.lock) {
 
                         // 1. Configuramos y encolamos de forma segura
-                        newP.aperiodicProcess(false, scheduler.getReadyQueue(), scheduler.getPolitic());
+                        newP.aperiodicProcess(false, scheduler.getReadyQueue(), scheduler.getPolitic(), simClock.getContadorCiclos());
                         System.out.println(">>> Proceso encolado correctamente.");
 
                         // 2. Si tu política lo requiere, este es el momento perfecto para reorganizar
@@ -716,6 +727,46 @@ public class Dashboard extends javax.swing.JFrame {
             }
         });
     }
+
+    public void actualizarBarrasPromedios() {
+        SwingUtilities.invokeLater(() -> {
+            double throughput = 0.0;
+            double esperaPromedio = 0.0;
+
+            // 1. Bloqueamos rápido para leer los números de forma segura
+            synchronized (scheduler.lock) {
+                // Asumiendo que ya creaste estos métodos en Scheduling.java
+                throughput = scheduler.getThroughput();
+                esperaPromedio = scheduler.getAvgWaitingTime();
+            }
+
+            // 2. Soltamos el candado y actualizamos la interfaz
+            // --- ACTUALIZAR BARRA DE THROUGHPUT ---
+            // Multiplicamos por 100 para que 1 proceso/tick sea el 100% visual
+            int porcentajeThroughput = (int) (throughput * 100);
+            barraThroughput.setMaximum(100);
+            barraThroughput.setValue(Math.min(porcentajeThroughput, 100)); // Que no pase de 100 visualmente
+            barraThroughput.setString(String.format("Throughput: %.3f proc/tick", throughput));
+
+            // --- ACTUALIZAR BARRA DE TIEMPO DE ESPERA ---
+            int esperaEntera = (int) esperaPromedio;
+
+            // Si la espera supera el límite visual de la barra, ampliamos el límite
+            if (esperaEntera >= barraWaitTime.getMaximum()) {
+                barraWaitTime.setMaximum(esperaEntera + 50);
+            } // Si la espera baja drásticamente, también podemos reducir el límite para que sea proporcional
+            else if (esperaEntera < barraWaitTime.getMaximum() / 2 && barraWaitTime.getMaximum() > 100) {
+                barraWaitTime.setMaximum(Math.max(100, esperaEntera + 20));
+            }
+
+            barraWaitTime.setValue(esperaEntera);
+            barraWaitTime.setString(String.format("Espera Promedio: %.1f ticks", esperaPromedio));
+
+            // Forzar el repintado
+            barraThroughput.repaint();
+            barraWaitTime.repaint();
+        });
+    }
     private void tiempoRelojActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tiempoRelojActionPerformed
         // 1. Obtenemos el texto de la opción seleccionada
         String velocidadSeleccionada = (String) tiempoReloj.getSelectedItem();
@@ -754,14 +805,18 @@ public class Dashboard extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_barraProgresoStateChanged
 
-    private void barraProgreso1StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_barraProgreso1StateChanged
+    private void barraThroughputStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_barraThroughputStateChanged
         // TODO add your handling code here:
-    }//GEN-LAST:event_barraProgreso1StateChanged
+    }//GEN-LAST:event_barraThroughputStateChanged
 
     private void graficaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_graficaActionPerformed
         monitor.setVisible(true);
         monitor.toFront(); // La trae al frente por si estaba detrás
     }//GEN-LAST:event_graficaActionPerformed
+
+    private void barraWaitTimeStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_barraWaitTimeStateChanged
+        // TODO add your handling code here:
+    }//GEN-LAST:event_barraWaitTimeStateChanged
 
     /**
      * @param args the command line arguments
@@ -940,6 +995,7 @@ public class Dashboard extends javax.swing.JFrame {
 
             // Actualizamos la barra de progreso al final
             actualizarBarraGlobal();
+            actualizarBarrasPromedios();     // <--- AÑADE ESTA LÍNEA AQUÍ
         });
     }
 
@@ -980,7 +1036,8 @@ public class Dashboard extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JProgressBar barraProgreso;
-    private javax.swing.JProgressBar barraProgreso1;
+    private javax.swing.JProgressBar barraThroughput;
+    private javax.swing.JProgressBar barraWaitTime;
     private javax.swing.JButton btnIniciar;
     private javax.swing.JButton grafica;
     private javax.swing.JButton jButton2;

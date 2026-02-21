@@ -20,6 +20,11 @@ public class Clock implements Runnable {
         this.duracionCicloMs = nuevaDuracion;
     }
 
+    public int getContadorCiclos() {
+        return contadorCiclos;
+    }
+    
+
     // ... (Tus otros getters y setters los dejo igual) ...
     @Override
     public void run() {
@@ -103,6 +108,6 @@ public class Clock implements Runnable {
     private void crearProcesoPeriodico(int id) {
         Process process = new Process();
         process.getPCB().setId(id);
-        process.periodicProcess(process.getPCB(), scheduler.getReadyQueue(), scheduler.getPolitic());
+        process.periodicProcess(process.getPCB(), scheduler.getReadyQueue(), scheduler.getPolitic(), this.getContadorCiclos());
     }
 }

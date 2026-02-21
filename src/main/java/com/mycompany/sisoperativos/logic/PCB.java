@@ -23,6 +23,8 @@ public class PCB {
     private String inputOutput;
     private int size;
     private PCB nextIO;
+    private int arrivalTime;
+    private int exitTime;
 
     public int getId() {
         return id;
@@ -128,6 +130,14 @@ public class PCB {
         this.nextIO = nextIO;
     }
 
+    public void setArrivalTime(int arrivalTime) {
+        this.arrivalTime = arrivalTime;
+    }
+
+    public int getArrivalTime() {
+        return arrivalTime;
+    }
+
     public PCB() {
         long time = System.nanoTime();
         this.id = (int) ((time % 10000000) + 1);
@@ -142,6 +152,8 @@ public class PCB {
         this.durationR = 0;
         this.size = 0;
         this.inputOutput = null;
+        this.arrivalTime = 0;
+        this.exitTime = 0;
     }
 
     public String processName() {
