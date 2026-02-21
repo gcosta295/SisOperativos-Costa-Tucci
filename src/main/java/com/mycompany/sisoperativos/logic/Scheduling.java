@@ -16,6 +16,8 @@ public class Scheduling {
     private Queue blockedQueue;
     private Queue ioQueue;
     private Queue finishedQueue;
+    private Queue suspendedReadyQueue;
+    private Queue suspendedBlockedQueue;
     private String politic;
     private int System_Quantum;
     private PCB currentProcess;
@@ -37,11 +39,21 @@ public class Scheduling {
 
     }
 
+    public Queue getSuspendedReadyQueue() {
+        return this.suspendedReadyQueue;
+    }
+
+    public Queue getSuspendedBlockedQueue() {
+        return this.suspendedBlockedQueue;
+    }
+
     public int getSystem_Quantum() {
         return System_Quantum;
     }
 
     public Scheduling(Dashboard gui) {
+        this.suspendedReadyQueue = new Queue();
+        this.suspendedBlockedQueue = new Queue();
         this.readyQueue = new Queue();
         this.ioQueue = new Queue();
         this.politic = null;
@@ -95,6 +107,7 @@ public class Scheduling {
 
     public void runExecutionCycle() {
         synchronized (this.lock) {
+            manageRAM();
             // 1. Cargar proceso si el CPU está vacío
             if (currentProcess == null) {
                 currentProcess = readyQueue.dequeue();
@@ -371,5 +384,223 @@ public class Scheduling {
                 sobreviviente = temporalesVivos.dequeue();
             }
         }
+    }
+
+    public void manageRAM() {
+        synchronized (this.lock) {
+            int ramUsada = calcularRamUsada();
+            System.out.println("DEBUG RAM -> Usada: " + ramUsada + " / Total: " + this.ramSize);
+
+            // 1. SWAP OUT (Expulsar SOLO UNO por ciclo si estamos llenos)
+            if (ramUsada > this.ramSize) {
+                PCB victima = extraerVictimaMayorDeadline();
+
+                if (victima != null && victima.getSize() > 0) {
+                    String estadoAntiguo = victima.getState();
+                    
+                    // Limpiamos sus conexiones para que no arrastre a otros
+                    victima.setNext(null);
+                    victima.setBefore(null);
+
+                    // Lo mandamos a la cola de suspendidos correcta
+                    if (estadoAntiguo != null && estadoAntiguo.equalsIgnoreCase("Blocked")) {
+                        victima.setState("SuspendedBlocked");
+                        this.suspendedBlockedQueue.enqueueFIFO(victima);
+                        gui.log("SWAP OUT: Proceso " + victima.getId() + " (Bloq) expulsado a Swap.");
+                    } else {
+                        victima.setState("SuspendedReady");
+                        this.suspendedReadyQueue.enqueueFIFO(victima);
+                        gui.log("SWAP OUT: Proceso " + victima.getId() + " (Listo) expulsado a Swap.");
+                    }
+
+                    // Actualizamos la RAM usada
+                    ramUsada -= victima.getSize();
+                }
+            }
+
+            // 2. SWAP IN (Traer SOLO UNO de vuelta por ciclo si hay espacio)
+            if (ramUsada < this.ramSize) {
+                int espacioLibre = this.ramSize - ramUsada;
+                PCB aDespertar = extraerSuspendidoMenorDeadline(espacioLibre);
+
+                if (aDespertar != null && aDespertar.getSize() > 0) {
+                    String estadoAntiguo = aDespertar.getState();
+                    
+                    // Limpiamos sus conexiones
+                    aDespertar.setNext(null);
+                    aDespertar.setBefore(null);
+
+                    // Lo regresamos a la RAM
+                    if (estadoAntiguo != null && estadoAntiguo.equalsIgnoreCase("SuspendedBlocked")) {
+                        aDespertar.setState("Blocked");
+                        this.blockedQueue.enqueueFIFO(aDespertar);
+                        gui.log("SWAP IN: Proceso " + aDespertar.getId() + " regresó a Bloqueados.");
+                    } else {
+                        aDespertar.setState("Ready");
+                        this.readyQueue.enqueueFIFO(aDespertar);
+                        gui.log("SWAP IN: Proceso " + aDespertar.getId() + " regresó a Listos.");
+                        
+                        // Si regresó a Ready y usamos política con prioridades, organizamos la cola
+                        if ("SRT".equals(this.politic) || "EDF".equals(this.politic) || "Priority".equals(this.politic)) {
+                            this.Organize();
+                        }
+                    }
+
+                    ramUsada += aDespertar.getSize();
+                }
+            }
+        }
+    }
+
+    // --- MÉTODOS AUXILIARES DEL GESTOR DE MEMORIA ---
+    private int calcularRamUsada() {
+        int total = 0;
+        if (this.currentProcess != null) {
+            total += this.currentProcess.getSize();
+        }
+
+        // Sumamos los de Ready
+        PCB aux = this.readyQueue.peek();
+        while (aux != null) {
+            total += aux.getSize();
+            aux = aux.getNext();
+        }
+
+        // Sumamos los de Blocked
+        aux = this.blockedQueue.peek();
+        while (aux != null) {
+            total += aux.getSize();
+            aux = aux.getNext();
+        }
+        return total;
+    }
+
+    private PCB extraerVictimaMayorDeadline() {
+        PCB peorReady = buscarPeorDeadline(this.readyQueue);
+        PCB peorBlocked = buscarPeorDeadline(this.blockedQueue);
+
+        if (peorReady == null && peorBlocked == null) {
+            return null;
+        }
+
+        PCB victimaElegida;
+        boolean estabaEnReady = false; // Nueva bandera de seguridad
+
+        if (peorReady == null) {
+            victimaElegida = peorBlocked;
+        } else if (peorBlocked == null) {
+            victimaElegida = peorReady;
+            estabaEnReady = true;
+        } else {
+            // Entre peorReady y peorBlocked, expulsamos al que tenga el número de deadline MÁS ALTO
+            if (peorBlocked.getDeadlineR() >= peorReady.getDeadlineR()) {
+                victimaElegida = peorBlocked;
+            } else {
+                victimaElegida = peorReady;
+                estabaEnReady = true;
+            }
+        }
+
+        // ¡EL TRUCO! Ahora no nos importa qué texto tenga getState()
+        // Lo sacamos de la cola correcta usando la bandera.
+        PCB extraido;
+        if (estabaEnReady) {
+            extraido = this.readyQueue.extractById(victimaElegida.getId());
+        } else {
+            extraido = this.blockedQueue.extractById(victimaElegida.getId());
+        }
+
+        // Si por alguna razón anómala extractById falló, imprimimos el error
+        if (extraido == null) {
+            System.out.println("ERROR CRÍTICO: extractById devolvió null para el ID " + victimaElegida.getId());
+        }
+
+        return extraido;
+    }
+
+    private PCB buscarPeorDeadline(Queue q) {
+        PCB aux = q.peek();
+
+        // Si la cola está vacía, retornamos null de inmediato
+        if (aux == null) {
+            return null;
+        }
+
+        // Asumimos inicialmente que el primero es el que tiene el "peor" deadline
+        PCB peor = aux;
+        int maxDeadline = aux.getDeadlineR();
+
+        // Empezamos a revisar desde el segundo proceso
+        aux = aux.getNext();
+
+        while (aux != null) {
+            if (aux.getDeadlineR() > maxDeadline) {
+                maxDeadline = aux.getDeadlineR();
+                peor = aux;
+            }
+            aux = aux.getNext();
+        }
+
+        return peor;
+    }
+
+    private PCB extraerSuspendidoMenorDeadline(int maxTamanoPermitido) {
+        PCB mejorSR = buscarMejorSuspendido(this.suspendedReadyQueue, maxTamanoPermitido);
+        PCB mejorSB = buscarMejorSuspendido(this.suspendedBlockedQueue, maxTamanoPermitido);
+
+        if (mejorSR == null && mejorSB == null) {
+            return null;
+        }
+
+        PCB elegido;
+        boolean estabaEnSR = false;
+
+        if (mejorSR == null) {
+            elegido = mejorSB;
+        } else if (mejorSB == null) {
+            elegido = mejorSR;
+            estabaEnSR = true;
+        } else {
+            if (mejorSR.getDeadlineR() <= mejorSB.getDeadlineR()) {
+                elegido = mejorSR;
+                estabaEnSR = true;
+            } else {
+                elegido = mejorSB;
+            }
+        }
+
+        // Extracción segura
+        if (estabaEnSR) {
+            return this.suspendedReadyQueue.extractById(elegido.getId());
+        } else {
+            return this.suspendedBlockedQueue.extractById(elegido.getId());
+        }
+    }
+
+    private PCB buscarMejorSuspendido(Queue q, int maxTamanoPermitido) {
+        PCB aux = q.peek();
+        PCB mejor = null;
+        int minDeadline = Integer.MAX_VALUE;
+
+        while (aux != null) {
+            // Solo lo consideramos si cabe en la RAM (aux.getSize() <= maxTamanoPermitido)
+            if (aux.getSize() <= maxTamanoPermitido && aux.getDeadlineR() < minDeadline) {
+                minDeadline = aux.getDeadlineR();
+                mejor = aux;
+            }
+            aux = aux.getNext();
+        }
+        return mejor;
+    }
+
+    // Agrégalo en Scheduling.java
+    public void ageAllQueues() {
+        // 1. Envejecemos a los que están en RAM
+        checkAndPurgeDeadlines(this.readyQueue);
+        checkAndPurgeDeadlines(this.blockedQueue);
+
+        // 2. ¡EL PARCHE! Envejecemos a los que están en SWAP (Suspendidos)
+        checkAndPurgeDeadlines(this.suspendedReadyQueue);
+        checkAndPurgeDeadlines(this.suspendedBlockedQueue);
     }
 }
