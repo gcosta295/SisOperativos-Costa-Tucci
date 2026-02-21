@@ -63,7 +63,7 @@ public class Scheduling {
         this.blockedQueue = new Queue();
         this.finishedQueue = new Queue();
         this.currentProcess = null;
-        this.System_Quantum = 10;
+        this.System_Quantum = 5;
         this.gui = gui;
         this.ramSize = 256;
         this.successFinish = 0;
@@ -156,6 +156,49 @@ public class Scheduling {
                         }
                         currentProcess = null;
                     } else {
+                        // --- INICIO CÓDIGO DE PREEMPTIONS ---
+                        System.out.println("DEBUG MODO: " + this.politic + " | ID: " + currentProcess.getId() + " | Quantum: " + currentProcess.getQuantum() + "/" + this.System_Quantum);
+                        boolean expulsar = false;
+
+                        // 1. Verificación para Round Robin (Expiración de Quantum)
+                        // NOTA: Cambia "this.maxQuantum" por el nombre de tu variable que guarda el límite del quantum
+                        if ("RR".equals(this.politic) && currentProcess.getQuantum() >= this.System_Quantum) {
+                            gui.log("Round Robin: Proceso " + currentProcess.getId() + " agotó su Quantum.");
+                            expulsar = true;    
+                        } // 2. Verificación para SRT, EDF o Prioridad (Si hay un proceso más urgente en cola)
+                        else if ("SRT".equals(this.politic) || "EDF".equals(this.politic) || "Priority".equals(this.politic)) {
+
+                            // Asumiendo que tu cola tiene un método getFirst() o peek() para ver al primer elemento sin sacarlo
+                            PCB candidato = this.readyQueue.getFirstP();
+
+                            if (candidato != null) {
+                                if ("SRT".equals(this.politic) && candidato.getDurationR() < currentProcess.getDurationR()) {
+                                    gui.log("SRT Preemption: Proceso " + candidato.getId() + " tiene menor tiempo restante.");
+                                    expulsar = true;
+                                } else if ("EDF".equals(this.politic) && candidato.getDeadlineR() < currentProcess.getDeadlineR()) {
+                                    gui.log("EDF Preemption: Proceso " + candidato.getId() + " tiene un deadline más crítico.");
+                                    expulsar = true;
+                                } else if ("Priority".equals(this.politic) && candidato.getPriority() < currentProcess.getPriority()) {
+                                    // Asumiendo que un valor numérico menor significa mayor prioridad
+                                    gui.log("Priority Preemption: Proceso " + candidato.getId() + " tiene mayor prioridad.");
+                                    expulsar = true;
+                                }
+                            }
+                        }
+
+                        // Si se activó la bandera de expulsión por cualquiera de las políticas:
+                        if (expulsar) {
+                            currentProcess.setState("Ready");
+                            this.readyQueue.enqueueFIFO(currentProcess); // Regresa a la cola de listos
+
+                            // Reorganizamos la cola solo si es una política de prioridad dinámica/ordenada
+                            if ("SRT".equals(this.politic) || "EDF".equals(this.politic) || "Priority".equals(this.politic)) {
+                                this.Organize();
+                            }
+
+                            currentProcess = null; // Liberamos el CPU para que el siguiente ciclo elija al nuevo proceso
+                        }
+                        // --- FIN CÓDIGO DE PREEMPTIONS ---
                     }
                 }
             }
@@ -278,7 +321,7 @@ public class Scheduling {
         }
     }
 
-public boolean manageRAM() {
+    public boolean manageRAM() {
         synchronized (this.lock) {
             int ramUsada = calcularRamUsada();
             boolean huboIntervencion = false; // Esta variable nos dirá si el CPU trabajó en la RAM
@@ -344,7 +387,7 @@ public boolean manageRAM() {
             if (huboIntervencion) {
                 try {
                     // Pausamos medio segundo (500 milisegundos). Ajusta este valor si lo quieres más rápido o lento.
-                    Thread.sleep(200); 
+                    Thread.sleep(200);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
@@ -354,6 +397,7 @@ public boolean manageRAM() {
             return huboIntervencion; // Retornamos si el CPU estuvo ocupado
         }
     }
+
     // --- MÉTODOS AUXILIARES DEL GESTOR DE MEMORIA ---
     private int calcularRamUsada() {
         int total = 0;
