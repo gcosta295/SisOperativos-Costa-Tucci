@@ -59,7 +59,7 @@ public class Process {
            this.PCB.setInputOutput("SD Memory");
            this.duration=20;
            this.PCB.setDurationHope(20);
-           this.deadLine=68;
+           this.deadLine=102;
            this.PCB.setSize(1);
         }else if ((id % 11 == 0)&&(flag)){
            flag = false;
@@ -68,7 +68,7 @@ public class Process {
            this.PCB.setInputOutput("Thermometer");
            this.duration=12;
            this.PCB.setDurationHope(12);
-           this.deadLine=40;
+           this.deadLine=60;
            this.PCB.setSize(5);
         }else if ((id % 7 == 0)&&(flag)){
            flag = false;
@@ -77,7 +77,7 @@ public class Process {
            this.PCB.setInputOutput("GNSS");
            this.duration=11;
            this.PCB.setDurationHope(11);
-           this.deadLine=38;
+           this.deadLine=57;
            this.PCB.setSize(8);
         }else if ((id % 5 == 0)&&(flag)){
            flag = false;
@@ -85,7 +85,7 @@ public class Process {
            this.processName="Telemetry";
            this.duration=10;
            this.PCB.setDurationHope(10);
-           this.deadLine=20;
+           this.deadLine=30;
            this.PCB.setSize(15);
         }else if ((id % 3 == 0)&&(flag)){
            flag = false;
@@ -94,7 +94,7 @@ public class Process {
            this.PCB.setInputOutput("Receptor");
            this.duration=6;
            this.PCB.setDurationHope(6);
-           this.deadLine=22;
+           this.deadLine=33;
            this.PCB.setSize(15);
         }else if (flag){
            flag = false;
@@ -102,7 +102,7 @@ public class Process {
            this.processName="System Health";
            this.duration=2;
            this.PCB.setDurationHope(2);
-           this.deadLine=8;
+           this.deadLine=12;
            this.PCB.setSize(60);
         }
         if ((id % 107==0) || (id % 113==0) || (id % 139==0) || (id % 101==0) || (id % 127==0)){
@@ -134,7 +134,7 @@ public class Process {
                     this.PCB.setInputOutput("Sysadmin");
                     this.duration=40;
                     this.PCB.setDurationHope(40);
-                    this.deadLine=104;
+                    this.deadLine=156;
                     this.PCB.setSize(150);
                     this.PCB.setPriority(4);
                 }
@@ -144,7 +144,7 @@ public class Process {
                     this.PCB.setInputOutput("Receptor");
                     this.duration=80;
                     this.PCB.setDurationHope(80);
-                    this.deadLine=204;
+                    this.deadLine=306;
                     this.PCB.setSize(15);
                     this.PCB.setPriority(4);
                 }
@@ -157,7 +157,7 @@ public class Process {
                     this.PCB.setInputOutput("Sensor");
                     this.duration=10;
                     this.PCB.setDurationHope(10);
-                    this.deadLine=38;
+                    this.deadLine=57;
                     this.PCB.setSize(80);
                     this.PCB.setPriority(7);
                 }
@@ -167,7 +167,7 @@ public class Process {
                     this.PCB.setInputOutput("SD memory");
                     this.duration=60;
                     this.PCB.setDurationHope(60);
-                    this.deadLine=156;
+                    this.deadLine=234;
                     this.PCB.setSize(1);
                     this.PCB.setPriority(7);
                     
@@ -178,7 +178,7 @@ public class Process {
                     this.PCB.setInputOutput("Radiation Detector");
                     this.duration=70;
                     this.PCB.setDurationHope(70);
-                    this.deadLine=172;
+                    this.deadLine=258;
                     this.PCB.setSize(10);
                     this.PCB.setPriority(7);
                 }
@@ -188,7 +188,7 @@ public class Process {
                     this.PCB.setInputOutput("Sysadmin");
                     this.duration=20;
                     this.PCB.setDurationHope(20);
-                    this.deadLine=64;
+                    this.deadLine=96;
                     this.PCB.setSize(150);
                     this.PCB.setPriority(7);
                 }
