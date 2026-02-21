@@ -324,47 +324,39 @@ newNode.setNext(null);
         return null;
     }
 
-    public PCB extractById(int id) {
-        if (this.firstP == null) {
-            return null; // Cola vacía
-        }
-        PCB current = this.firstP;
-
-        // 1. Buscar el proceso con el ID solicitado
-        while (current != null) {
-            if (current.getId() == id) {
-                // ¡LO ENCONTRAMOS! Ahora a desconectarlo
-
-                // Caso A: Es el primero de la cola
-                if (current == this.firstP) {
-                    this.firstP = current.getNext();
-                    if (this.firstP != null) {
-                        this.firstP.setBefore(null);
-                    } else {
-                        this.lastP = null; // La cola quedó vacía
-                    }
-                } // Caso B: Es el último de la cola
-                else if (current == this.lastP) {
-                    this.lastP = current.getBefore();
-                    if (this.lastP != null) {
-                        this.lastP.setNext(null);
-                    }
-                } // Caso C: Está en medio de dos procesos
-                else {
-                    current.getBefore().setNext(current.getNext());
-                    current.getNext().setBefore(current.getBefore());
-                }
-
-                // Limpiar los punteros del nodo extraído por seguridad
-                current.setNext(null);
-                current.setBefore(null);
-                this.len--; // Reducir el tamaño de la cola
-                return current;
+public PCB extractById(int id) {
+    PCB aux = this.firstP;
+    while (aux != null) {
+        if (aux.getId() == id) {
+            // 1. Si es el ÚNICO elemento en la cola
+            if (this.firstP == aux && this.lastP == aux) {
+                this.firstP = null;
+                this.lastP = null;
+            } 
+            // 2. Si es el PRIMER elemento (Head)
+            else if (this.firstP == aux) {
+                this.firstP = aux.getNext();
+                if (this.firstP != null) this.firstP.setBefore(null);
+            } 
+            // 3. Si es el ÚLTIMO elemento (Tail)
+            else if (this.lastP == aux) {
+                this.lastP = aux.getBefore();
+                if (this.lastP != null) this.lastP.setNext(null);
+            } 
+            // 4. Si está en el MEDIO
+            else {
+                aux.getBefore().setNext(aux.getNext());
+                aux.getNext().setBefore(aux.getBefore());
             }
-            current = current.getNext();
+            
+            // ¡VITAL! Desconectar al proceso extraído de la matrix
+            aux.setNext(null);
+            aux.setBefore(null);
+            
+            return aux; // Retornamos el proceso limpio
         }
-
-        return null; // No se encontró el proceso
+        aux = aux.getNext();
     }
-
+    return null; // No se encontró
+}
 }

@@ -38,8 +38,7 @@ public class Clock implements Runnable {
 
                     // --- A. EJECUCIÓN DEL PLANIFICADOR ---
                     scheduler.runExecutionCycle();
-                    scheduler.checkAndPurgeDeadlines(scheduler.getReadyQueue());
-                    scheduler.checkAndPurgeDeadlines(scheduler.getBlockedQueue());
+                    scheduler.ageAllQueues();
 
                     // --- B. CREACIÓN DE PROCESOS PERIÓDICOS ---
                     // Ahora están seguros dentro del candado
@@ -77,6 +76,8 @@ public class Clock implements Runnable {
                         gui.updateReadyQueue(scheduler.getReadyQueue());
                         gui.updateBlockedQueue(scheduler.getBlockedQueue());
                         gui.updateFinishedQueue(scheduler.getFinishedQueue());
+                        gui.updateSuspendedReadyQueue(scheduler.getSuspendedReadyQueue());
+                        gui.updateSuspendedBlockedQueue(scheduler.getSuspendedBlockedQueue());
                     });
                 } else {
                     System.out.println("!!! ERROR: El reloj no tiene conexión con la ventana (gui es null)");
