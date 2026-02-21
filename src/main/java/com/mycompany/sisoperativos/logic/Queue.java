@@ -15,7 +15,7 @@ public class Queue {
     private PCB lastP;
     private InputOutput firstIO;
     private InputOutput lastIO;
-    private int len;                                        //Revisar
+    private int len;
     private int capacity;
 
     public String getName() {
@@ -88,22 +88,28 @@ public class Queue {
         if (this.firstP == null) {
             return null;
         }
-        PCB target = this.firstP; 
-        this.firstP = this.firstP.getNext(); 
+
+        PCB target = this.firstP; // El que va a salir
+        this.firstP = this.firstP.getNext(); // El segundo pasa a ser primero
+
         if (this.firstP != null) {
-            this.firstP.setBefore(null); 
+            this.firstP.setBefore(null); // El nuevo primero no tiene a nadie antes
         } else {
-            this.lastP = null;
+            this.lastP = null; // Si no hay nadie más, la cola está vacía
         }
+
+        // LIMPIEZA CRÍTICA: Desconectar el proceso extraído de la cadena
         target.setNext(null);
         target.setBefore(null);
+
         this.len--;
         return target;
     }
 
     public void enqueueByDeadline(PCB newNode) { //Earliest Deadline First METHOD WHEN INSERTED
         // Case 1: The queue is empty
-
+newNode.setNext(null);
+    newNode.setBefore(null);
         if (firstP == null) {
             firstP = newNode;
             lastP = newNode;
@@ -137,7 +143,7 @@ public class Queue {
             }
             current.setNext(newNode);
         }
-        len = +1; // Increment queue size
+        this.len++; // Increment queue size
     }
 
     public void enqueueFIFO(PCB newNode) {
@@ -167,7 +173,8 @@ public class Queue {
 
     public void enqueueByRemainingTime(PCB newNode) { //Shortest time remaining (the same as EDF but with duration)
         // Case 1: The queue is empty
-
+        newNode.setNext(null);
+    newNode.setBefore(null);
         if (firstP == null) {
             firstP = newNode;
             lastP = newNode;
@@ -201,44 +208,79 @@ public class Queue {
             }
             current.setNext(newNode);
         }
-        len = +1; // Increment queue size
+        this.len++; // Increment queue size
     }
 
-    public void enqueueByPriority(PCB newNode) { //Shortest time remaining (the same as EDF but with duration)
-        // Case 1: The queue is empty
-
+    public void enqueueByPriority(PCB newNode) {
+        newNode.setNext(null);
+        newNode.setBefore(null);
         if (firstP == null) {
             firstP = newNode;
             lastP = newNode;
             newNode.setNext(null);
             newNode.setBefore(null);
-        } // Case 2: The new process has the shortest deadline (New Head)
-        else if (newNode.getPriority() <= firstP.getPriority()) {
-            firstP.setNext(newNode);
-            newNode.setBefore(firstP);
-        } // Case 3: Find the correct position in the middle or at the end
-        else {
-            PCB current = firstP;
+        } else if (newNode.getPriority() >= firstP.getPriority()) {
+            // El nuevo nodo va de primero
+            firstP.setBefore(newNode);
+            newNode.setNext(firstP);
+            newNode.setBefore(null); // Buena práctica: asegurarnos de que no haya nada antes
 
-            // Traverse the list until finding the correct spot
-            while (current.getNext() != null && current.getNext().getPriority() < newNode.getPriority()) {
+            firstP = newNode; // ¡CORRECCIÓN CRÍTICA! Actualizamos la cabeza de la fila
+        } else {
+            PCB current = firstP;
+            // Buscamos la posición correcta
+            while (current.getNext() != null && current.getNext().getPriority() > newNode.getPriority()) {
                 current = current.getNext();
             }
 
-            // Insert newNode after 'current'
-            newNode.setNext(current.getNext());
+            // Insertamos el nuevo nodo
             newNode.setBefore(current);
+            newNode.setNext(current.getNext());
 
             if (current.getNext() != null) {
-                // Link the following node back to the new node
+                // Enlazamos el nodo siguiente de vuelta al nuevo nodo
                 current.getNext().setBefore(newNode);
             } else {
-                // If inserted at the end, update the Tail pointer
+                // Si lo insertamos al final, actualizamos el puntero lastP (Cola)
                 lastP = newNode;
             }
             current.setNext(newNode);
         }
-        len = +1; // Increment queue size
+
+        len++; // ¡CORRECCIÓN! Ahora sí incrementa el tamaño en 1
+    }
+
+    // Método para encolar usando SOLO el puntero de I/O
+    public void enqueueIO(PCB process) {
+        process.setNextIO(null); // Limpiamos por si acaso
+
+        if (this.firstP == null) {
+            this.firstP = process;
+            this.lastP = process;
+        } else {
+            this.lastP.setNextIO(process); // Enlazamos usando la segunda "cuerda"
+            this.lastP = process;
+        }
+        // Incrementa tu contador de tamaño si tienes uno (ej. this.len++)
+    }
+
+    // Método para desencolar usando SOLO el puntero de I/O
+    public PCB dequeueIO() {
+        if (this.firstP == null) {
+            return null;
+        }
+
+        PCB processToExtract = this.firstP;
+        this.firstP = this.firstP.getNextIO(); // Avanzamos usando la segunda "cuerda"
+
+        if (this.firstP == null) {
+            this.lastP = null;
+        }
+
+        processToExtract.setNextIO(null); // Limpiamos el rastro
+        // Disminuye tu contador de tamaño si tienes uno (ej. this.len--)
+
+        return processToExtract;
     }
 
     public void decrementAllDeadlines() {
@@ -262,7 +304,6 @@ public class Queue {
     }
 
     public void enqueueIO(InputOutput io) {
-        this.len = +1;
         if (this.firstIO == null) {
             this.firstIO = io;
             this.lastIO = io;
@@ -271,62 +312,51 @@ public class Queue {
             this.lastIO = io;
         }
     }
-    
-    public InputOutput serchByName(String ioName){
-        InputOutput checker = this.firstIO;
-        boolean flag = true;
-        while (flag){
-            if (checker.getName().equals(ioName)){
-                flag=false;
-            }else{
-                checker=checker.getNext();
+
+    public InputOutput ioSercher(String name) {
+        InputOutput temp = this.firstIO;
+        while (temp != null) {
+            if (temp.getName().equals(name)) {
+                return temp;
             }
+            temp = temp.getNext();
         }
-        return checker;
+        return null;
     }
 
-    public PCB extractById(int id) {
-        if (this.firstP == null) {
-            return null; // Cola vacía
-        }
-        PCB current = this.firstP;
-
-        // 1. Buscar el proceso con el ID solicitado
-        while (current != null) {
-            if (current.getId() == id) {
-                // ¡LO ENCONTRAMOS! Ahora a desconectarlo
-
-                // Caso A: Es el primero de la cola
-                if (current == this.firstP) {
-                    this.firstP = current.getNext();
-                    if (this.firstP != null) {
-                        this.firstP.setBefore(null);
-                    } else {
-                        this.lastP = null; // La cola quedó vacía
-                    }
-                } // Caso B: Es el último de la cola
-                else if (current == this.lastP) {
-                    this.lastP = current.getBefore();
-                    if (this.lastP != null) {
-                        this.lastP.setNext(null);
-                    }
-                } // Caso C: Está en medio de dos procesos
-                else {
-                    current.getBefore().setNext(current.getNext());
-                    current.getNext().setBefore(current.getBefore());
-                }
-
-                // Limpiar los punteros del nodo extraído por seguridad
-                current.setNext(null);
-                current.setBefore(null);
-                this.len--; // Reducir el tamaño de la cola
-                return current;
+public PCB extractById(int id) {
+    PCB aux = this.firstP;
+    while (aux != null) {
+        if (aux.getId() == id) {
+            // 1. Si es el ÚNICO elemento en la cola
+            if (this.firstP == aux && this.lastP == aux) {
+                this.firstP = null;
+                this.lastP = null;
+            } 
+            // 2. Si es el PRIMER elemento (Head)
+            else if (this.firstP == aux) {
+                this.firstP = aux.getNext();
+                if (this.firstP != null) this.firstP.setBefore(null);
+            } 
+            // 3. Si es el ÚLTIMO elemento (Tail)
+            else if (this.lastP == aux) {
+                this.lastP = aux.getBefore();
+                if (this.lastP != null) this.lastP.setNext(null);
+            } 
+            // 4. Si está en el MEDIO
+            else {
+                aux.getBefore().setNext(aux.getNext());
+                aux.getNext().setBefore(aux.getBefore());
             }
-            current = current.getNext();
+            
+            // ¡VITAL! Desconectar al proceso extraído de la matrix
+            aux.setNext(null);
+            aux.setBefore(null);
+            
+            return aux; // Retornamos el proceso limpio
         }
-
-        return null; // No se encontró el proceso
+        aux = aux.getNext();
     }
-    
-    
+    return null; // No se encontró
+}
 }

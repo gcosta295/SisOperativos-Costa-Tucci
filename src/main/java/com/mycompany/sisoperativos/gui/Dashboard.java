@@ -24,6 +24,7 @@ public class Dashboard extends javax.swing.JFrame {
     private Scheduling scheduler;
     private Clock simClock;
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Dashboard.class.getName());
+    private MonitorWindow monitor = new MonitorWindow();
 
     /**
      * Creates new form Dashboard
@@ -35,9 +36,11 @@ public class Dashboard extends javax.swing.JFrame {
         scheduler = new Scheduling(this);
         scheduler.getReadyQueue().setName("ReadyQueue");
         scheduler.getBlockedQueue().setName("BlockedQueue");
-        scheduler.getIoQueue().setName("IoQueue");
-        scheduler.setPolitic("FIFO"); // O la política que quieras
-
+        scheduler.setPolitic("FIFO");
+        jComboBox1.setEnabled(false);
+        tiempoReloj.setEnabled(false);
+        random.setEnabled(false);
+        jButton2.setEnabled(false);
         int indexIO = 6;
         while (indexIO >= 0) {
             InputOutput io = new InputOutput();
@@ -46,6 +49,7 @@ public class Dashboard extends javax.swing.JFrame {
             indexIO -= 1;
         }
         int counter = 6;
+        simClock = new Clock(1000, scheduler, this);
         while (counter > 0) {
             Process process = new Process();
             if (counter == 6) {
@@ -66,12 +70,10 @@ public class Dashboard extends javax.swing.JFrame {
             if (counter == 1) {
                 process.getPCB().setId(13);
             }
-            process.periodicProcess(process.getPCB(), scheduler.getReadyQueue(), scheduler.getPolitic());
+            process.periodicProcess(process.getPCB(), scheduler.getReadyQueue(), scheduler.getPolitic(), simClock.getContadorCiclos());
             counter -= 1;
         }
         // 3. ¡IMPORTANTE! Creamos el reloj y le pasamos "this" (esta ventana)
-        simClock = new Clock(1000, scheduler, this);
-        simClock.setScheduler(scheduler);
     }
 
     /**
@@ -90,25 +92,39 @@ public class Dashboard extends javax.swing.JFrame {
         txtCpuRem = new javax.swing.JLabel();
         txtCpuPriority = new javax.swing.JLabel();
         txtCpuDL = new javax.swing.JLabel();
+        txtCpuModo = new javax.swing.JLabel();
+        txtCpuNombre = new javax.swing.JLabel();
         jPanel3 = new javax.swing.JPanel();
         jScrollPane5 = new javax.swing.JScrollPane();
-        tablaListos1 = new javax.swing.JTable();
+        tablaSusListos = new javax.swing.JTable();
+        jLabel2 = new javax.swing.JLabel();
         jPanel5 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
         tablaBloqueados = new javax.swing.JTable();
+        jLabel4 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
         txtConsola = new javax.swing.JTextArea();
         btnIniciar = new javax.swing.JButton();
         random = new javax.swing.JButton();
-        tablaSusBloqueados = new javax.swing.JPanel();
+        panel = new javax.swing.JPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
         tablaSalida = new javax.swing.JTable();
+        jLabel5 = new javax.swing.JLabel();
         jButton2 = new javax.swing.JButton();
         jComboBox1 = new javax.swing.JComboBox<>();
         jPanel4 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        tablaSusListos = new javax.swing.JTable();
+        tablaListos = new javax.swing.JTable();
+        jLabel1 = new javax.swing.JLabel();
         tiempoReloj = new javax.swing.JComboBox<>();
+        barraProgreso = new javax.swing.JProgressBar();
+        jPanel6 = new javax.swing.JPanel();
+        jScrollPane7 = new javax.swing.JScrollPane();
+        tablaSusBloqueados = new javax.swing.JTable();
+        jLabel3 = new javax.swing.JLabel();
+        barraThroughput = new javax.swing.JProgressBar();
+        grafica = new javax.swing.JButton();
+        barraWaitTime = new javax.swing.JProgressBar();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -116,293 +132,458 @@ public class Dashboard extends javax.swing.JFrame {
         jPanel1.setForeground(new java.awt.Color(37, 85, 157));
 
         lblReloj.setBackground(new java.awt.Color(255, 255, 255));
+        lblReloj.setFont(new java.awt.Font("Segoe UI Black", 0, 12)); // NOI18N
+        lblReloj.setForeground(new java.awt.Color(255, 255, 255));
         lblReloj.setText("Ciclos: ");
         lblReloj.setToolTipText("");
-        lblReloj.setOpaque(true);
 
         jPanel2.setBackground(new java.awt.Color(153, 0, 153));
         jPanel2.setBorder(javax.swing.BorderFactory.createMatteBorder(3, 3, 3, 3, new java.awt.Color(102, 0, 102)));
         jPanel2.setForeground(new java.awt.Color(102, 0, 102));
 
         txtCpuId.setBackground(new java.awt.Color(242, 242, 100));
-        txtCpuId.setFont(new java.awt.Font("Swis721 BlkCn BT", 0, 12)); // NOI18N
+        txtCpuId.setFont(new java.awt.Font("Swis721 BlkCn BT", 0, 14)); // NOI18N
         txtCpuId.setForeground(new java.awt.Color(255, 255, 255));
-        txtCpuId.setText("txt");
+        txtCpuId.setText("ID");
 
         txtCpuRem.setBackground(new java.awt.Color(242, 242, 100));
-        txtCpuRem.setFont(new java.awt.Font("Swis721 BlkCn BT", 0, 12)); // NOI18N
+        txtCpuRem.setFont(new java.awt.Font("Swis721 BlkCn BT", 0, 14)); // NOI18N
         txtCpuRem.setForeground(new java.awt.Color(255, 255, 255));
-        txtCpuRem.setText("rem");
+        txtCpuRem.setText("T. Res");
 
         txtCpuPriority.setBackground(new java.awt.Color(242, 242, 100));
-        txtCpuPriority.setFont(new java.awt.Font("Swis721 BlkCn BT", 0, 12)); // NOI18N
+        txtCpuPriority.setFont(new java.awt.Font("Swis721 BlkCn BT", 0, 14)); // NOI18N
         txtCpuPriority.setForeground(new java.awt.Color(255, 255, 255));
         txtCpuPriority.setText("priority");
 
         txtCpuDL.setBackground(new java.awt.Color(242, 242, 100));
-        txtCpuDL.setFont(new java.awt.Font("Swis721 BlkCn BT", 0, 12)); // NOI18N
+        txtCpuDL.setFont(new java.awt.Font("Swis721 BlkCn BT", 0, 14)); // NOI18N
         txtCpuDL.setForeground(new java.awt.Color(255, 255, 255));
-        txtCpuDL.setText("dead");
+        txtCpuDL.setText("Deadline");
+
+        txtCpuModo.setBackground(new java.awt.Color(255, 255, 255));
+        txtCpuModo.setFont(new java.awt.Font("Swis721 Blk BT", 0, 14)); // NOI18N
+        txtCpuModo.setText("Modo Supervisor");
+        txtCpuModo.setOpaque(true);
+
+        txtCpuNombre.setBackground(new java.awt.Color(242, 242, 100));
+        txtCpuNombre.setFont(new java.awt.Font("Swis721 BlkCn BT", 0, 14)); // NOI18N
+        txtCpuNombre.setForeground(new java.awt.Color(255, 255, 255));
+        txtCpuNombre.setText("Nombre");
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGap(17, 17, 17)
+                .addGap(23, 23, 23)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(txtCpuRem, javax.swing.GroupLayout.PREFERRED_SIZE, 172, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
                         .addComponent(txtCpuId, javax.swing.GroupLayout.PREFERRED_SIZE, 184, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtCpuDL, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(txtCpuPriority, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(txtCpuRem, javax.swing.GroupLayout.PREFERRED_SIZE, 172, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(177, Short.MAX_VALUE))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(txtCpuNombre, javax.swing.GroupLayout.PREFERRED_SIZE, 184, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 57, Short.MAX_VALUE)
+                        .addComponent(txtCpuDL, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(91, 91, 91))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(txtCpuPriority, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(txtCpuModo, javax.swing.GroupLayout.PREFERRED_SIZE, 138, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(19, 19, 19))))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(14, 14, 14)
+                .addComponent(txtCpuId)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(txtCpuId)
-                        .addGap(18, 18, 18))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                        .addComponent(txtCpuDL)
-                        .addGap(10, 10, 10)))
+                        .addGap(18, 18, 18)
+                        .addComponent(txtCpuNombre, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGap(6, 6, 6)
+                        .addComponent(txtCpuDL)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 12, Short.MAX_VALUE)
                 .addComponent(txtCpuRem)
-                .addGap(48, 48, 48)
-                .addComponent(txtCpuPriority)
-                .addContainerGap(26, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtCpuPriority)
+                    .addComponent(txtCpuModo))
+                .addGap(15, 15, 15))
         );
 
         jPanel3.setBackground(new java.awt.Color(129, 146, 255));
 
-        tablaListos1.setModel(new javax.swing.table.DefaultTableModel(
+        tablaSusListos.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null}
             },
             new String [] {
-                "ID", "CPU Restante", "Prioridad", "Deadline"
+                "ID", "Nombre", "Prioridad", "Deadline", "T. Res", "MAR"
             }
         ));
-        jScrollPane5.setViewportView(tablaListos1);
+        jScrollPane5.setViewportView(tablaSusListos);
+
+        jLabel2.setBackground(new java.awt.Color(235, 225, 251));
+        jLabel2.setFont(new java.awt.Font("Swis721 LtCn BT", 1, 18)); // NOI18N
+        jLabel2.setText("Cola SuspendidosListos");
+        jLabel2.setOpaque(true);
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
-                .addGap(15, 15, 15)
-                .addComponent(jScrollPane5, javax.swing.GroupLayout.PREFERRED_SIZE, 307, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(27, Short.MAX_VALUE))
+                .addGap(20, 20, 20)
+                .addComponent(jScrollPane5, javax.swing.GroupLayout.PREFERRED_SIZE, 335, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(17, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jLabel2)
+                .addGap(101, 101, 101))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
-                .addGap(16, 16, 16)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                .addGap(9, 9, 9)
+                .addComponent(jLabel2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane5, javax.swing.GroupLayout.PREFERRED_SIZE, 281, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(17, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jPanel5.setBackground(new java.awt.Color(129, 146, 255));
 
         tablaBloqueados.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null}
             },
             new String [] {
-                "ID", "CPU Restante", "Prioridad", "Deadline"
+                "ID", "Nombre", "Prioridad", "Deadline", "T. Res", "MAR"
             }
         ));
         jScrollPane3.setViewportView(tablaBloqueados);
+
+        jLabel4.setBackground(new java.awt.Color(235, 225, 251));
+        jLabel4.setFont(new java.awt.Font("Swis721 LtCn BT", 1, 18)); // NOI18N
+        jLabel4.setText("Cola Bloqueados");
+        jLabel4.setOpaque(true);
 
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel5Layout.createSequentialGroup()
-                .addGap(15, 15, 15)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 331, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(18, Short.MAX_VALUE))
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel5Layout.createSequentialGroup()
+                        .addGap(15, 15, 15)
+                        .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 435, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel5Layout.createSequentialGroup()
+                        .addGap(177, 177, 177)
+                        .addComponent(jLabel4)))
+                .addContainerGap(36, Short.MAX_VALUE))
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel5Layout.createSequentialGroup()
-                .addContainerGap(16, Short.MAX_VALUE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jLabel4)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 310, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18))
+                .addGap(14, 14, 14))
         );
 
         txtConsola.setColumns(20);
         txtConsola.setRows(5);
         jScrollPane2.setViewportView(txtConsola);
 
+        btnIniciar.setFont(new java.awt.Font("Swis721 LtCn BT", 0, 14)); // NOI18N
         btnIniciar.setText("Arranque");
+        btnIniciar.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnIniciar.addActionListener(this::btnIniciarActionPerformed);
 
+        random.setFont(new java.awt.Font("Swis721 LtCn BT", 0, 14)); // NOI18N
         random.setText("20 Random");
         random.addActionListener(this::randomActionPerformed);
 
-        tablaSusBloqueados.setBackground(new java.awt.Color(129, 146, 255));
+        panel.setBackground(new java.awt.Color(129, 146, 255));
 
         tablaSalida.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null}
             },
             new String [] {
-                "ID", "CPU Restante", "Prioridad", "Deadline"
+                "ID", "Nombre", "Prioridad", "Deadline", "T. Res", "MAR"
             }
         ));
         jScrollPane4.setViewportView(tablaSalida);
 
-        javax.swing.GroupLayout tablaSusBloqueadosLayout = new javax.swing.GroupLayout(tablaSusBloqueados);
-        tablaSusBloqueados.setLayout(tablaSusBloqueadosLayout);
-        tablaSusBloqueadosLayout.setHorizontalGroup(
-            tablaSusBloqueadosLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(tablaSusBloqueadosLayout.createSequentialGroup()
-                .addGap(14, 14, 14)
-                .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 330, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(20, Short.MAX_VALUE))
+        jLabel5.setBackground(new java.awt.Color(235, 225, 251));
+        jLabel5.setFont(new java.awt.Font("Swis721 LtCn BT", 1, 18)); // NOI18N
+        jLabel5.setText("Cola Salida");
+        jLabel5.setOpaque(true);
+
+        javax.swing.GroupLayout panelLayout = new javax.swing.GroupLayout(panel);
+        panel.setLayout(panelLayout);
+        panelLayout.setHorizontalGroup(
+            panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelLayout.createSequentialGroup()
+                .addGroup(panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(panelLayout.createSequentialGroup()
+                        .addGap(17, 17, 17)
+                        .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 434, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(panelLayout.createSequentialGroup()
+                        .addGap(189, 189, 189)
+                        .addComponent(jLabel5)))
+                .addContainerGap(40, Short.MAX_VALUE))
         );
-        tablaSusBloqueadosLayout.setVerticalGroup(
-            tablaSusBloqueadosLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(tablaSusBloqueadosLayout.createSequentialGroup()
-                .addGap(20, 20, 20)
-                .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 244, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(15, Short.MAX_VALUE))
+        panelLayout.setVerticalGroup(
+            panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelLayout.createSequentialGroup()
+                .addGap(12, 12, 12)
+                .addComponent(jLabel5)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                .addGap(16, 16, 16))
         );
 
+        jButton2.setFont(new java.awt.Font("Swis721 LtCn BT", 0, 14)); // NOI18N
         jButton2.setText("Unique P");
         jButton2.addActionListener(this::jButton2ActionPerformed);
 
+        jComboBox1.setFont(new java.awt.Font("Swis721 LtCn BT", 0, 14)); // NOI18N
         jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "FCFS", "RR", "SRT", "EDF", "Priority" }));
         jComboBox1.addActionListener(this::jComboBox1ActionPerformed);
 
         jPanel4.setBackground(new java.awt.Color(129, 146, 255));
 
-        tablaSusListos.setModel(new javax.swing.table.DefaultTableModel(
+        tablaListos.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null}
             },
             new String [] {
-                "ID", "CPU Restante", "Prioridad", "Deadline"
+                "ID", "Nombre", "Prioridad", "Deadline", "T. Res", "MAR"
             }
         ));
-        jScrollPane1.setViewportView(tablaSusListos);
+        jScrollPane1.setViewportView(tablaListos);
+
+        jLabel1.setBackground(new java.awt.Color(235, 225, 251));
+        jLabel1.setFont(new java.awt.Font("Swis721 LtCn BT", 1, 18)); // NOI18N
+        jLabel1.setText("Cola Listos");
+        jLabel1.setOpaque(true);
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
+                .addContainerGap(14, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 465, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(16, 16, 16))
             .addGroup(jPanel4Layout.createSequentialGroup()
-                .addGap(16, 16, 16)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 310, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(19, Short.MAX_VALUE))
+                .addGap(213, 213, 213)
+                .addComponent(jLabel1)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel4Layout.createSequentialGroup()
-                .addGap(14, 14, 14)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 280, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(21, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
+                .addContainerGap(12, Short.MAX_VALUE)
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 268, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(17, 17, 17))
         );
 
+        tiempoReloj.setFont(new java.awt.Font("Swis721 LtCn BT", 0, 14)); // NOI18N
         tiempoReloj.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Normal (0.5s)", "Rápido (0.2s)", "Turbo (0.1s)", "Lento (1s)", "Muy Lento (2s)" }));
         tiempoReloj.addActionListener(this::tiempoRelojActionPerformed);
+
+        barraProgreso.setBackground(new java.awt.Color(204, 255, 255));
+        barraProgreso.setFont(new java.awt.Font("Segoe UI", 1, 10)); // NOI18N
+        barraProgreso.setForeground(new java.awt.Color(0, 102, 102));
+        barraProgreso.setOpaque(true);
+        barraProgreso.setStringPainted(true);
+        barraProgreso.addChangeListener(this::barraProgresoStateChanged);
+
+        jPanel6.setBackground(new java.awt.Color(129, 146, 255));
+
+        tablaSusBloqueados.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null}
+            },
+            new String [] {
+                "ID", "Nombre", "Prioridad", "Deadline", "T. Res", "MAR"
+            }
+        ));
+        jScrollPane7.setViewportView(tablaSusBloqueados);
+
+        jLabel3.setBackground(new java.awt.Color(235, 225, 251));
+        jLabel3.setFont(new java.awt.Font("Swis721 LtCn BT", 1, 18)); // NOI18N
+        jLabel3.setText("Cola SuspendidosBloqueados");
+        jLabel3.setOpaque(true);
+
+        javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
+        jPanel6.setLayout(jPanel6Layout);
+        jPanel6Layout.setHorizontalGroup(
+            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel6Layout.createSequentialGroup()
+                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel6Layout.createSequentialGroup()
+                        .addGap(19, 19, 19)
+                        .addComponent(jScrollPane7, javax.swing.GroupLayout.PREFERRED_SIZE, 307, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel6Layout.createSequentialGroup()
+                        .addGap(68, 68, 68)
+                        .addComponent(jLabel3)))
+                .addContainerGap(20, Short.MAX_VALUE))
+        );
+        jPanel6Layout.setVerticalGroup(
+            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel6Layout.createSequentialGroup()
+                .addContainerGap(12, Short.MAX_VALUE)
+                .addComponent(jLabel3)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jScrollPane7, javax.swing.GroupLayout.PREFERRED_SIZE, 272, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18))
+        );
+
+        barraThroughput.setBackground(new java.awt.Color(255, 178, 255));
+        barraThroughput.setFont(new java.awt.Font("Segoe UI", 1, 10)); // NOI18N
+        barraThroughput.setForeground(new java.awt.Color(255, 0, 204));
+        barraThroughput.setOpaque(true);
+        barraThroughput.setStringPainted(true);
+        barraThroughput.addChangeListener(this::barraThroughputStateChanged);
+
+        grafica.setFont(new java.awt.Font("Swis721 LtCn BT", 0, 14)); // NOI18N
+        grafica.setText("Grafica");
+        grafica.addActionListener(this::graficaActionPerformed);
+
+        barraWaitTime.setBackground(new java.awt.Color(255, 240, 213));
+        barraWaitTime.setFont(new java.awt.Font("Segoe UI", 1, 10)); // NOI18N
+        barraWaitTime.setForeground(new java.awt.Color(255, 102, 51));
+        barraWaitTime.setOpaque(true);
+        barraWaitTime.setStringPainted(true);
+        barraWaitTime.addChangeListener(this::barraWaitTimeStateChanged);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(42, 42, 42)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addGroup(jPanel1Layout.createSequentialGroup()
-                            .addComponent(lblReloj, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(btnIniciar))
-                        .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(27, 27, 27)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(42, 42, 42)
-                        .addComponent(random)
-                        .addGap(39, 39, 39)
-                        .addComponent(jButton2)
-                        .addGap(46, 46, 46)
-                        .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(50, 50, 50)
-                        .addComponent(tiempoReloj, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGap(12, 12, 12)
+                                .addComponent(lblReloj, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(37, 37, 37)
+                                .addComponent(btnIniciar)
+                                .addGap(18, 18, 18)
+                                .addComponent(random)
+                                .addGap(26, 26, 26)
+                                .addComponent(jButton2)
+                                .addGap(26, 26, 26)
+                                .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(tiempoReloj, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(grafica))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(26, 26, 26)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 475, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 36, Short.MAX_VALUE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(56, 56, 56)
-                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(64, 64, 64)
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 467, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 282, Short.MAX_VALUE)
+                        .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(29, 29, 29)
+                        .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(barraProgreso, javax.swing.GroupLayout.PREFERRED_SIZE, 231, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(barraThroughput, javax.swing.GroupLayout.PREFERRED_SIZE, 231, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(barraWaitTime, javax.swing.GroupLayout.PREFERRED_SIZE, 231, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(tablaSusBloqueados, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(151, 151, 151))
+                    .addComponent(panel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(39, 39, 39))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(33, 33, 33)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(btnIniciar)
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(random)
-                        .addComponent(jButton2)
-                        .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(tiempoReloj, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(309, 309, 309))
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(48, 48, 48)
-                .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, Short.MAX_VALUE))
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(23, 23, 23)
-                .addComponent(lblReloj, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(tablaSusBloqueados, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addGap(23, 23, 23)
+                        .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(23, Short.MAX_VALUE))
+                        .addGap(17, 17, 17)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(btnIniciar)
+                                .addComponent(random)
+                                .addComponent(jButton2)
+                                .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(tiempoReloj, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(grafica))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addComponent(lblReloj, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jPanel4, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addGroup(jPanel1Layout.createSequentialGroup()
+                                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)))))))
+                .addGap(18, 18, 18)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jPanel6, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(barraProgreso, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(barraThroughput, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(39, 39, 39)
+                        .addComponent(barraWaitTime, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(panel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(81, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 12, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         pack();
@@ -415,6 +596,10 @@ public class Dashboard extends javax.swing.JFrame {
             Thread hiloReloj = new Thread(simClock);
             hiloReloj.start();
             btnIniciar.setEnabled(false);
+            jComboBox1.setEnabled(true);
+            tiempoReloj.setEnabled(true);
+            random.setEnabled(true);
+            jButton2.setEnabled(true);
         } else {
             System.out.println("!!! ERROR: simClock es null. No se creó en el constructor.");
         }    }//GEN-LAST:event_btnIniciarActionPerformed
@@ -427,23 +612,30 @@ public class Dashboard extends javax.swing.JFrame {
             public void run() {
                 for (int i = 0; i < 20; i++) {
                     try {
-                        // Intentamos crear el proceso
+                        // 1. Creamos el proceso afuera del candado (esto no rompe nada)
                         System.out.println(">>> Intentando crear proceso " + i + "...");
                         Process newP = new Process();
 
-                        // Intentamos configurarlo y encolarlo
-                        newP.aperiodicProcess(false, scheduler.getReadyQueue(), scheduler.getPolitic());
-                        System.out.println(">>> Proceso " + i + " encolado correctamente.");
+                        // 2. ¡CERRAMOS EL CANDADO! Pedimos permiso exclusivo
+                        synchronized (scheduler.lock) {
 
-                        // Actualizamos la tabla
+                            // Intentamos configurarlo y encolarlo
+                            newP.aperiodicProcess(false, scheduler.getReadyQueue(), scheduler.getPolitic(), simClock.getContadorCiclos());
+                            System.out.println(">>> Proceso " + i + " encolado correctamente.");
+
+                            // Si tu simulador requiere reordenar (Priority, SRT, EDF), descomenta esto:
+                            // scheduler.Organize();
+                            // Actualizamos la tabla leyendo la cola de forma segura
+                        } // 3. ¡ABRIMOS EL CANDADO! El scheduler puede volver a trabajar.
                         updateReadyQueue(scheduler.getReadyQueue());
 
+                        // 4. Pausamos el hilo medio segundo AFUERA del candado
                         Thread.sleep(500);
 
-                    } catch (Exception e) { // ¡ATRAPAMOS EL ERROR SILENCIOSO!
+                    } catch (Exception e) {
                         System.err.println("!!! ERROR FATAL creando el proceso " + i + " !!!");
-                        e.printStackTrace(); // Esto nos dirá la línea exacta del fallo
-                        break; // Abortamos el bucle para no lanzar 20 errores seguidos
+                        e.printStackTrace();
+                        break;
                     }
                 }
                 System.out.println("¡El hilo generador terminó!");
@@ -478,34 +670,103 @@ public class Dashboard extends javax.swing.JFrame {
         Thread hiloGenerador = new Thread(new Runnable() {
             @Override
             public void run() {
-
                 try {
-                    // Intentamos crear el proceso
+                    // Creamos el proceso (esto no afecta a las colas, así que va afuera)
                     System.out.println(">>> Intentando crear proceso ...");
                     Process newP = new Process();
 
-                    // Intentamos configurarlo y encolarlo
-                    newP.aperiodicProcess(false, scheduler.getReadyQueue(), scheduler.getPolitic());
-                    System.out.println(">>> Proceso encolado correctamente.");
+                    // ¡AQUÍ PONEMOS EL CANDADO!
+                    // Pedimos permiso para tocar las colas del scheduler
+                    synchronized (scheduler.lock) {
 
-                    // Actualizamos la tabla
+                        // 1. Configuramos y encolamos de forma segura
+                        newP.aperiodicProcess(false, scheduler.getReadyQueue(), scheduler.getPolitic(), simClock.getContadorCiclos());
+                        System.out.println(">>> Proceso encolado correctamente.");
+
+                        // 2. Si tu política lo requiere, este es el momento perfecto para reorganizar
+                        scheduler.Organize();
+
+                        // 3. Actualizamos la tabla de la interfaz
+                    } // ¡SE LIBERA EL CANDADO! 
+                    // A partir de aquí, el reloj de simulación puede volver a trabajar.
                     updateReadyQueue(scheduler.getReadyQueue());
 
-                    Thread.sleep(500);
+                    // OJO: El sleep DEBE ir afuera del candado. 
+                    // Si lo pones adentro, congelas toda la simulación por medio segundo.
+                    Thread.sleep(800);
 
-                } catch (Exception e) { // ¡ATRAPAMOS EL ERROR SILENCIOSO!
+                } catch (Exception e) {
                     System.err.println("!!! ERROR FATAL creando el proceso !!!");
-                    e.printStackTrace(); // Esto nos dirá la línea exacta del fallo
-
+                    e.printStackTrace();
                 }
 
                 System.out.println("¡El hilo generador terminó!");
             }
         });
-
-        hiloGenerador.start();
+        hiloGenerador.start(); // ¡No olvides iniciar el hilo si no lo tenías!
     }//GEN-LAST:event_jButton2ActionPerformed
 
+    public void actualizarBarraGlobal() {
+        SwingUtilities.invokeLater(() -> {
+            int totales;
+            int exitosos;
+
+            // Bloqueamos rápido para leer los números de forma segura
+            synchronized (scheduler.lock) {
+                totales = scheduler.getFinishedQueue().getLen();
+                exitosos = scheduler.getSuccessFinish();
+            }
+
+            // Ya soltamos el candado, ahora podemos hacer matemáticas e interfaz en paz
+            if (totales > 0) {
+                barraProgreso.setMaximum(totales);
+                barraProgreso.setValue(exitosos);
+                int porcentaje = (int) ((exitosos * 100.0f) / totales);
+                barraProgreso.setString("Exito: " + porcentaje + "% (" + exitosos + "/" + totales + ")");
+                barraProgreso.repaint();
+            }
+        });
+    }
+
+    public void actualizarBarrasPromedios() {
+        SwingUtilities.invokeLater(() -> {
+            double throughput = 0.0;
+            double esperaPromedio = 0.0;
+
+            // 1. Bloqueamos rápido para leer los números de forma segura
+            synchronized (scheduler.lock) {
+                // Asumiendo que ya creaste estos métodos en Scheduling.java
+                throughput = scheduler.getThroughput();
+                esperaPromedio = scheduler.getAvgWaitingTime();
+            }
+
+            // 2. Soltamos el candado y actualizamos la interfaz
+            // --- ACTUALIZAR BARRA DE THROUGHPUT ---
+            // Multiplicamos por 100 para que 1 proceso/tick sea el 100% visual
+            int porcentajeThroughput = (int) (throughput * 100);
+            barraThroughput.setMaximum(100);
+            barraThroughput.setValue(Math.min(porcentajeThroughput, 100)); // Que no pase de 100 visualmente
+            barraThroughput.setString(String.format("Throughput: %.3f proc/tick", throughput));
+
+            // --- ACTUALIZAR BARRA DE TIEMPO DE ESPERA ---
+            int esperaEntera = (int) esperaPromedio;
+
+            // Si la espera supera el límite visual de la barra, ampliamos el límite
+            if (esperaEntera >= barraWaitTime.getMaximum()) {
+                barraWaitTime.setMaximum(esperaEntera + 50);
+            } // Si la espera baja drásticamente, también podemos reducir el límite para que sea proporcional
+            else if (esperaEntera < barraWaitTime.getMaximum() / 2 && barraWaitTime.getMaximum() > 100) {
+                barraWaitTime.setMaximum(Math.max(100, esperaEntera + 20));
+            }
+
+            barraWaitTime.setValue(esperaEntera);
+            barraWaitTime.setString(String.format("Espera Promedio: %.1f ticks", esperaPromedio));
+
+            // Forzar el repintado
+            barraThroughput.repaint();
+            barraWaitTime.repaint();
+        });
+    }
     private void tiempoRelojActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tiempoRelojActionPerformed
         // 1. Obtenemos el texto de la opción seleccionada
         String velocidadSeleccionada = (String) tiempoReloj.getSelectedItem();
@@ -540,6 +801,23 @@ public class Dashboard extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_tiempoRelojActionPerformed
 
+    private void barraProgresoStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_barraProgresoStateChanged
+        // TODO add your handling code here:
+    }//GEN-LAST:event_barraProgresoStateChanged
+
+    private void barraThroughputStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_barraThroughputStateChanged
+        // TODO add your handling code here:
+    }//GEN-LAST:event_barraThroughputStateChanged
+
+    private void graficaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_graficaActionPerformed
+        monitor.setVisible(true);
+        monitor.toFront(); // La trae al frente por si estaba detrás
+    }//GEN-LAST:event_graficaActionPerformed
+
+    private void barraWaitTimeStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_barraWaitTimeStateChanged
+        // TODO add your handling code here:
+    }//GEN-LAST:event_barraWaitTimeStateChanged
+
     /**
      * @param args the command line arguments
      */
@@ -553,151 +831,254 @@ public class Dashboard extends javax.swing.JFrame {
 
     // 2. Actualizar el Reloj y el CPU
 // 1. Método para actualizar la Tabla de Listos (jTable1)
+    // 1. Método para actualizar la Tabla de Listos (jTable1)
     public void updateReadyQueue(com.mycompany.sisoperativos.logic.Queue colaListos) {
         SwingUtilities.invokeLater(() -> {
             // Obtenemos el modelo de la tabla 1
-            DefaultTableModel modelo = (DefaultTableModel) tablaSusListos.getModel();
+            DefaultTableModel modelo = (DefaultTableModel) tablaListos.getModel();
             modelo.setRowCount(0); // Esto borra las filas anteriores para no duplicar
 
             if (colaListos != null) {
-                // Empezamos desde el primero de la fila
-                com.mycompany.sisoperativos.logic.PCB aux = colaListos.peek();
+                // ¡EL SECRETO ESTÁ AQUÍ! 
+                // Frenamos el reloj de simulación solo una fracción de segundo mientras leemos la fila
+                synchronized (scheduler.lock) {
 
-                // Recorremos la cola y vamos agregando filas
-                while (aux != null) {
-                    modelo.addRow(new Object[]{
-                        aux.getId(),
-                        aux.getDurationR(),
-                        aux.getPriority(),
-                        aux.getDeadlineR()
-                    });
-                    aux = aux.getNext(); // Pasamos al siguiente
-                }
+                    // Empezamos desde el primero de la fila
+                    com.mycompany.sisoperativos.logic.PCB aux = colaListos.peek();
+
+                    // Recorremos la cola y vamos agregando filas de forma segura
+                    while (aux != null) {
+                        modelo.addRow(new Object[]{
+                            aux.getId(),
+                            aux.processName(),
+                            // O el nombre de tu getter para CPU restante
+                            aux.getPriority(),
+                            aux.getDeadlineR(), // O el getter para Deadline
+                            aux.getDurationR(),
+                            aux.getSize()
+                        }
+                        );
+
+                        // Avanzamos al siguiente
+                        aux = aux.getNext();
+                    }
+                } // ¡Listo! Soltamos el candado y el reloj sigue corriendo.
             }
-        });
+        }
+        );
     }
 
-    // 2. Método para actualizar la Tabla de Bloqueados (jTable2)
     public void updateBlockedQueue(com.mycompany.sisoperativos.logic.Queue colaBloqueados) {
         SwingUtilities.invokeLater(() -> {
-            // Obtenemos el modelo de la tabla 2
             DefaultTableModel modelo = (DefaultTableModel) tablaBloqueados.getModel();
             modelo.setRowCount(0);
-
             if (colaBloqueados != null) {
-                com.mycompany.sisoperativos.logic.PCB aux = colaBloqueados.peek();
-                while (aux != null) {
-                    modelo.addRow(new Object[]{
-                        aux.getId(),
-                        aux.getDurationR(),
-                        aux.getPriority(),
-                        aux.getDeadlineR()
-                    });
-                    aux = aux.getNext();
-                }
+                synchronized (scheduler.lock) {
+
+                    // Empezamos desde el primero de la fila
+                    com.mycompany.sisoperativos.logic.PCB aux = colaBloqueados.peek();
+
+                    // Recorremos la cola y vamos agregando filas de forma segura
+                    while (aux != null) {
+                        modelo.addRow(new Object[]{
+                            aux.getId(),
+                            aux.processName(),
+                            // O el nombre de tu getter para CPU restante
+                            aux.getPriority(),
+                            aux.getDeadlineR(), // O el getter para Deadline
+                            aux.getDurationR(),
+                            aux.getSize()
+                        });
+
+                        // Avanzamos al siguiente
+                        aux = aux.getNext();
+                    }
+                } // ¡Listo! Soltamos el candado y el reloj sigue corriendo.
             }
         });
     }
-    
-    public void updateIOQueue(com.mycompany.sisoperativos.logic.Queue colaIO) {
+
+    // Método para actualizar la Tabla de Suspendidos Listos (tablaSusListos)
+    public void updateSuspendedReadyQueue(com.mycompany.sisoperativos.logic.Queue colaSusListos) {
         SwingUtilities.invokeLater(() -> {
-            DefaultTableModel modelo = (DefaultTableModel) tablaBloqueados.getModel();
-            modelo.setRowCount(0);
+            // Obtenemos el modelo de la tabla de suspendidos listos
+            DefaultTableModel modelo = (DefaultTableModel) tablaSusListos.getModel();
+            modelo.setRowCount(0); // Borramos filas anteriores
 
-            if (colaIO != null) {
-                com.mycompany.sisoperativos.logic.InputOutput aux = colaIO.getFirstIO();
-                while (aux != null) {
-                    modelo.addRow(new Object[]{
-                        aux.getIOQueue(),
-                        aux.getPcbProcess(),
-                        aux.isInUse(),
-                    });
-                    aux = aux.getNext();
+            if (colaSusListos != null) {
+                // Cerramos el candado para lectura segura
+                synchronized (scheduler.lock) {
+                    com.mycompany.sisoperativos.logic.PCB aux = colaSusListos.peek();
+
+                    // Recorremos la cola
+                    while (aux != null) {
+                        modelo.addRow(new Object[]{
+                            aux.getId(),
+                            aux.processName(),
+                            // O el nombre de tu getter para CPU restante
+                            aux.getPriority(),
+                            aux.getDeadlineR(), // O el getter para Deadline
+                            aux.getDurationR(),
+                            aux.getSize()
+                        // Nota: Si en tu diseño agregaste una columna para el tamaño en RAM,
+                        // solo añade aquí: aux.getSize()
+                        });
+                        aux = aux.getNext();
+                    }
                 }
             }
         });
     }
 
-    // Método para actualizar la Tabla de Finalizados (jTable nueva)
+    // Método para actualizar la Tabla de Suspendidos Bloqueados (tablaSusBloqueados)
+    public void updateSuspendedBlockedQueue(com.mycompany.sisoperativos.logic.Queue colaSusBloqueados) {
+        SwingUtilities.invokeLater(() -> {
+            // Obtenemos el modelo de la tabla de suspendidos bloqueados
+            DefaultTableModel modelo = (DefaultTableModel) tablaSusBloqueados.getModel();
+            modelo.setRowCount(0); // Borramos filas anteriores
+
+            if (colaSusBloqueados != null) {
+                // Cerramos el candado para lectura segura
+                synchronized (scheduler.lock) {
+                    com.mycompany.sisoperativos.logic.PCB aux = colaSusBloqueados.peek();
+
+                    // Recorremos la cola
+                    while (aux != null) {
+                        modelo.addRow(new Object[]{
+                            aux.getId(),
+                            aux.processName(),
+                            // O el nombre de tu getter para CPU restante
+                            aux.getPriority(),
+                            aux.getDeadlineR(), // O el getter para Deadline
+                            aux.getDurationR(),
+                            aux.getSize()
+                        // Nota: Si en tu diseño agregaste una columna para el tamaño en RAM,
+                        // solo añade aquí: aux.getSize()
+                        });
+                        aux = aux.getNext();
+                    }
+                }
+            }
+        });
+    }
+
     public void updateFinishedQueue(com.mycompany.sisoperativos.logic.Queue colaFinalizados) {
         SwingUtilities.invokeLater(() -> {
-            // 1. Verificamos que la tabla exista para evitar errores
             if (tablaSalida == null) {
                 System.err.println("Advertencia: tablaFinalizados no existe en la interfaz.");
                 return;
             }
 
-            // 2. Obtenemos el modelo de la tabla y la limpiamos
             DefaultTableModel modelo = (DefaultTableModel) tablaSalida.getModel();
-            modelo.setRowCount(0); // Esto borra las filas anteriores para no duplicar datos
+            modelo.setRowCount(0); // Limpiamos la tabla
 
-            // 3. Recorremos la cola de finalizados si no está vacía
             if (colaFinalizados != null) {
-                com.mycompany.sisoperativos.logic.PCB aux = colaFinalizados.peek();
 
-                while (aux != null) {
-                    // Agregamos una nueva fila por cada proceso terminado
-                    modelo.addRow(new Object[]{
-                        aux.getId(),
-                        aux.getDurationR(), // Si terminó bien será 0. Si murió por deadline, será > 0
-                        aux.getPriority(),
-                        aux.getDeadlineR()
-                    });
+                // ¡CERRAMOS EL CANDADO ANTES DE RECORRER LA COLA!
+                synchronized (scheduler.lock) {
+                    com.mycompany.sisoperativos.logic.PCB aux = colaFinalizados.peek();
 
-                    // Pasamos al siguiente nodo en la cola
-                    aux = aux.getNext();
-                }
+                    while (aux != null) {
+                        modelo.addRow(new Object[]{
+                            aux.getId(),
+                            aux.processName(),
+                            // O el nombre de tu getter para CPU restante
+                            aux.getPriority(),
+                            aux.getDeadlineR(), // O el getter para Deadline
+                            aux.getDurationR(),
+                            aux.getSize()
+                        });
+                        aux = aux.getNext();
+                    }
+                } // ¡SOLTAMOS EL CANDADO! El simulador puede continuar.
             }
+
+            // Actualizamos la barra de progreso al final
+            actualizarBarraGlobal();
+            actualizarBarrasPromedios();     // <--- AÑADE ESTA LÍNEA AQUÍ
         });
     }
 
     // 3. Método para actualizar el CPU (Las etiquetas del medio)
-    public void updateStatus(int ciclo, com.mycompany.sisoperativos.logic.PCB current) {
+    public void updateStatus(int ciclos, com.mycompany.sisoperativos.logic.PCB procesoActual) {
         SwingUtilities.invokeLater(() -> {
-            lblReloj.setText("Ciclo Actual: " + ciclo);
+            lblReloj.setText("Ciclos: " + ciclos);
 
-            if (current != null) {
-                // NOTA: Cambia jLabel1, jLabel2, jLabel3 por los nombres de tus textos celestes
-                txtCpuId.setText("ID Ejecutando: " + current.getId());
-                txtCpuRem.setText("Tiempo Restante: " + current.getDurationR());
-                txtCpuPriority.setText("Prioridad: " + current.getPriority());
-                txtCpuDL.setText("Deadline: " + current.getDeadlineR());
-            } else {
-                txtCpuId.setText("CPU VACÍO");
-                txtCpuRem.setText("-");
-                txtCpuPriority.setText("-");
+            // Leemos el proceso actual de forma segura
+            synchronized (scheduler.lock) {
+                if (procesoActual != null) {
+                    txtCpuModo.setText("Modo Usuario");
+                    txtCpuId.setText("ID: " + procesoActual.getId());
+                    txtCpuNombre.setText("Nombre: " + procesoActual.processName());
+                    txtCpuRem.setText("Rem: " + procesoActual.getDurationR());
+                    txtCpuPriority.setText("Priority: " + procesoActual.getPriority());
+                    txtCpuDL.setText("DL: " + procesoActual.getDeadlineR());
+                } else {
+                    txtCpuModo.setText("Modo Supervisor");
+                    txtCpuId.setText("");
+                    txtCpuRem.setText("");
+                    txtCpuPriority.setText("");
+                    txtCpuDL.setText("");
+                    txtCpuNombre.setText("");
+                }
+            }
+        });
+    }
+// Método público para cambiar el Modo del CPU desde otras clases
+
+    public void setCpuModo(String modo) {
+        SwingUtilities.invokeLater(() -> {
+            if (txtCpuModo != null) {
+                txtCpuModo.setText(modo);
             }
         });
     }
 
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JProgressBar barraProgreso;
+    private javax.swing.JProgressBar barraThroughput;
+    private javax.swing.JProgressBar barraWaitTime;
     private javax.swing.JButton btnIniciar;
+    private javax.swing.JButton grafica;
     private javax.swing.JButton jButton2;
     private javax.swing.JComboBox<String> jComboBox1;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
+    private javax.swing.JPanel jPanel6;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPane5;
+    private javax.swing.JScrollPane jScrollPane7;
     private javax.swing.JLabel lblReloj;
+    private javax.swing.JPanel panel;
     private javax.swing.JButton random;
     private javax.swing.JTable tablaBloqueados;
-    private javax.swing.JTable tablaListos1;
+    private javax.swing.JTable tablaListos;
     private javax.swing.JTable tablaSalida;
-    private javax.swing.JPanel tablaSusBloqueados;
+    private javax.swing.JTable tablaSusBloqueados;
     private javax.swing.JTable tablaSusListos;
     private javax.swing.JComboBox<String> tiempoReloj;
     private javax.swing.JTextArea txtConsola;
     private javax.swing.JLabel txtCpuDL;
     private javax.swing.JLabel txtCpuId;
+    private javax.swing.JLabel txtCpuModo;
+    private javax.swing.JLabel txtCpuNombre;
     private javax.swing.JLabel txtCpuPriority;
     private javax.swing.JLabel txtCpuRem;
     // End of variables declaration//GEN-END:variables
+
+    public MonitorWindow getMonitor() {
+        return monitor;
+    }
 
 }
