@@ -108,7 +108,8 @@ public class Queue {
 
     public void enqueueByDeadline(PCB newNode) { //Earliest Deadline First METHOD WHEN INSERTED
         // Case 1: The queue is empty
-
+newNode.setNext(null);
+    newNode.setBefore(null);
         if (firstP == null) {
             firstP = newNode;
             lastP = newNode;
@@ -142,7 +143,7 @@ public class Queue {
             }
             current.setNext(newNode);
         }
-        len = +1; // Increment queue size
+        this.len++; // Increment queue size
     }
 
     public void enqueueFIFO(PCB newNode) {
@@ -172,7 +173,8 @@ public class Queue {
 
     public void enqueueByRemainingTime(PCB newNode) { //Shortest time remaining (the same as EDF but with duration)
         // Case 1: The queue is empty
-
+        newNode.setNext(null);
+    newNode.setBefore(null);
         if (firstP == null) {
             firstP = newNode;
             lastP = newNode;
@@ -206,10 +208,12 @@ public class Queue {
             }
             current.setNext(newNode);
         }
-        len = +1; // Increment queue size
+        this.len++; // Increment queue size
     }
 
     public void enqueueByPriority(PCB newNode) {
+        newNode.setNext(null);
+        newNode.setBefore(null);
         if (firstP == null) {
             firstP = newNode;
             lastP = newNode;
