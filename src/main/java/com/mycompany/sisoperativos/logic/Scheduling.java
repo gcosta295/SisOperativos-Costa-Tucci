@@ -117,6 +117,7 @@ public class Scheduling {
                     // Si el momento de ir a E/S coincide con el ciclo actual
                     if (io != null && (currentProcess.getDurationHope() - currentProcess.getDurationR() == io.getCounter())) {
                         gui.log("!!! PROCESO " + currentProcess.getId() + " ENVIADO A E/S !!!");
+                        System.out.println("!!! PROCESO " + currentProcess.getId() + " ENVIADO A E/S !!!");
 
                         // 1. Cambiamos su estado oficial a Bloqueado
                         currentProcess.setState("Blocked");
@@ -139,38 +140,55 @@ public class Scheduling {
                     // 1. Le restamos 1 a TU timer del dispositivo
                     tempIO.setTimer(tempIO.getTimer() - 1);
 
-                    // 2. ¿El timer llegó a 0? (Significa que ya cumplió su totalTime)
-                    // 2. ¿El timer llegó a 0? (Significa que ya cumplió su totalTime)
+// 2. ¿El timer llegó a 0? (Significa que ya cumplió su totalTime)
                     if (tempIO.getTimer() <= 0) {
 
-                        // Lo sacamos de la tabla general de bloqueados
                         this.blockedQueue.extractById(pcbEnIO.getId());
 
-                        // ¡NUEVO! Limpiamos su puntero por si acaso se trae a otros procesos pegados
                         pcbEnIO.setNext(null);
 
-                        // Limpiamos la variable porque ya no necesita I/O
                         pcbEnIO.setInputOutput(null);
 
-                        // ¡NUEVO! Le cambiamos el estado para que la interfaz lo pueda dibujar
-                        pcbEnIO.setState("Ready");
+                        // ¡EL PARCHE ANTI-ZOMBIS! 
+                        // Solo lo devolvemos a la cola Ready si NO está muerto.
+                        if (!"Aborted".equals(pcbEnIO.getState()) && !"Exit".equals(pcbEnIO.getState())) {
 
-                        gui.log("Proceso " + pcbEnIO.getId() + " terminó su I/O en " + tempIO.getName());
+                            pcbEnIO.setState("Ready");
 
-                        // Lo devolvemos a la cola Ready (agregué FIFO como salvavidas por si acaso)
-                        if ("FCFS".equals(politic) || "FIFO".equals(politic) || "RR".equals(politic)) {
-                            this.readyQueue.enqueueFIFO(pcbEnIO);
-                        } else if ("SRT".equals(politic)) {
-                            this.readyQueue.enqueueByRemainingTime(pcbEnIO);
-                        } else if ("Priority".equals(politic)) {
-                            this.readyQueue.enqueueByPriority(pcbEnIO);
-                        } else if ("EDF".equals(politic)) {
-                            this.readyQueue.enqueueByDeadline(pcbEnIO);
+                            gui.log("Proceso " + pcbEnIO.getId() + " terminó su I/O en " + tempIO.getName());
+
+                            // Lo devolvemos a la cola Ready según la política
+                            if ("FCFS".equals(politic) || "FIFO".equals(politic) || "RR".equals(politic)) {
+
+                                this.readyQueue.enqueueFIFO(pcbEnIO);
+
+                            } else if ("SRT".equals(politic)) {
+
+                                this.readyQueue.enqueueByRemainingTime(pcbEnIO);
+
+                            } else if ("Priority".equals(politic)) {
+
+                                this.readyQueue.enqueueByPriority(pcbEnIO);
+
+                            } else if ("EDF".equals(politic)) {
+
+                                this.readyQueue.enqueueByDeadline(pcbEnIO);
+
+                            } else {
+
+                                // Salvavidas: Si la política viene nula o con otro nombre, que no se pierda el proceso
+                                this.readyQueue.enqueueFIFO(pcbEnIO);
+
+                            }
+
                         } else {
-                            // Salvavidas: Si la política viene nula o con otro nombre, que no se pierda el proceso
-                            this.readyQueue.enqueueFIFO(pcbEnIO);
+
+                            System.out.println("Fantasma de I/O eliminado: El proceso " + pcbEnIO.getId() + " ya estaba muerto.");
+
                         }
 
+                        // 3. Si había alguien haciendo fila específica para ESTE dispositivo...
+                        // ... (el código de nextInIO se queda igual)
                         // 3. Si había alguien haciendo fila específica para ESTE dispositivo, lo metemos
                         // CAMBIA EL dequeue() normal por dequeueIO()
                         PCB nextInIO = tempIO.getIOQueue().dequeueIO();
@@ -190,6 +208,7 @@ public class Scheduling {
             if (currentProcess != null) {
                 // ¿Terminó con éxito?
                 if (currentProcess.getDurationR() <= 0) {
+                    System.out.println("Proceso " + currentProcess.getId() + " finalizado con ÉXITO.");
                     gui.log("Proceso " + currentProcess.getId() + " finalizado con ÉXITO.");
                     currentProcess.setState("Exit");
                     if (finishedQueue != null) {
@@ -200,6 +219,7 @@ public class Scheduling {
                 } // ¿Se le acabó el deadline estando en el CPU?
                 else if (currentProcess.getDeadlineR() <= 0) {
                     gui.log("¡ALERTA! Proceso " + currentProcess.getId() + " TERMINADO ANÓMALAMENTE (Deadline Vencido en CPU).");
+                    System.out.println("Proceso " + currentProcess.getId() + " finalizado con ÉXITO.");
                     currentProcess.setState("Aborted");
                     if (finishedQueue != null) {
                         finishedQueue.enqueueFIFO(currentProcess);
@@ -311,12 +331,10 @@ public class Scheduling {
 
         // Sincronizamos para que la interfaz no lea la cola mientras la modificamos
         synchronized (this.lock) {
-            PCB aux = queue.peek(); // Miramos el primero, NO lo sacamos con dequeue
+            Queue temporalesVivos = new Queue(); // Aquí guardaremos los que sobrevivan
+            PCB aux = queue.dequeue(); // Lo sacamos POR COMPLETO de la cola original
 
             while (aux != null) {
-                // Guardamos el siguiente antes de evaluar, por si tenemos que eliminar a 'aux'
-                PCB siguiente = aux.getNext();
-
                 // 1. Restamos 1 al deadline
                 aux.setDeadlineR(aux.getDeadlineR() - 1);
 
@@ -324,23 +342,34 @@ public class Scheduling {
                 if (aux.getDeadlineR() <= 0 && aux.getDurationR() > 0) {
                     gui.log("¡ALERTA! Proceso " + aux.getId() + " TERMINADO ANÓMALAMENTE (Deadline Vencido en espera).");
                     aux.setState("Aborted");
+                    System.out.println("¡ALERTA! Proceso " + aux.getId() + " TERMINADO ANÓMALAMENTE (Deadline Vencido en espera).");
 
-                    // Usamos tu método para extraer SOLO al que se le acabó el tiempo
-                    queue.extractById(aux.getId());
-
-                    // ¡EL SALVAVIDAS! Le borramos la memoria de quién estaba detrás de él
+                    // ¡LIMPIEZA ABSOLUTA! Rompemos cualquier lazo con otros procesos
                     aux.setNext(null);
+                    aux.setBefore(null);
 
                     // Lo mandamos al cementerio
                     if (finishedQueue != null) {
                         finishedQueue.enqueueFIFO(aux);
                     }
+                } else {
+                    // Si sobrevive, lo preparamos y lo metemos a la sala de espera temporal
+                    aux.setNext(null);
+                    aux.setBefore(null);
+                    temporalesVivos.enqueueFIFO(aux);
                 }
 
-                // 3. Pasamos al siguiente
-                aux = siguiente;
+                // 3. Sacamos el siguiente de la cola original
+                aux = queue.dequeue();
+            }
+
+            // 4. ¡LA MAGIA! Devolvemos todos los sobrevivientes a su cola original
+            PCB sobreviviente = temporalesVivos.dequeue();
+            while (sobreviviente != null) {
+                // Al usar enqueueFIFO, se reescriben los punteros de forma limpia y segura
+                queue.enqueueFIFO(sobreviviente);
+                sobreviviente = temporalesVivos.dequeue();
             }
         }
-
     }
 }

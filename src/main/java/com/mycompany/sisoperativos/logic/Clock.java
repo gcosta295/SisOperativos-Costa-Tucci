@@ -4,8 +4,8 @@ import com.mycompany.sisoperativos.gui.Dashboard;
 
 public class Clock implements Runnable {
 
-    private int contadorCiclos = 0; 
-    private int duracionCicloMs; 
+    private int contadorCiclos = 0;
+    private int duracionCicloMs;
     private boolean encendido = true;
     private final Scheduling scheduler;
     private Dashboard gui;
@@ -21,14 +21,13 @@ public class Clock implements Runnable {
     }
 
     // ... (Tus otros getters y setters los dejo igual) ...
-
     @Override
     public void run() {
         while (encendido) { // Mejor usar la variable de control que 'true'
             try {
                 // 1. Pausa del ciclo (Fuera del candado para no bloquear el GUI)
                 Thread.sleep(duracionCicloMs);
-                
+
                 // 2. Incrementamos el ciclo
                 contadorCiclos++;
                 System.out.println(">>> Reloj Tick: " + contadorCiclos);
@@ -36,12 +35,12 @@ public class Clock implements Runnable {
                 // 3. ¡EL CANDADO GLOBAL!
                 // Bloqueamos el planificador completo antes de hacer CUALQUIER cambio
                 synchronized (scheduler.lock) {
-                    
+
                     // --- A. EJECUCIÓN DEL PLANIFICADOR ---
                     scheduler.runExecutionCycle();
                     scheduler.checkAndPurgeDeadlines(scheduler.getReadyQueue());
                     scheduler.checkAndPurgeDeadlines(scheduler.getBlockedQueue());
-                    
+
                     // --- B. CREACIÓN DE PROCESOS PERIÓDICOS ---
                     // Ahora están seguros dentro del candado
                     if (contadorCiclos % 8 == 0) {
@@ -62,20 +61,23 @@ public class Clock implements Runnable {
                     if (contadorCiclos % 200 == 0) {
                         crearProcesoPeriodico(13);
                     }
-                    
+
                     // (Opcional) Reorganizar colas si tu política lo exige tras insertar nuevos procesos
                     // scheduler.Organize();
-
                 } // 4. ¡SOLTAMOS EL CANDADO! 
-                  // Ahora la lógica del planificador está a salvo, podemos pintar la interfaz
+                // Ahora la lógica del planificador está a salvo, podemos pintar la interfaz
 
                 // 5. ACTUALIZAR INTERFAZ
                 // (Recuerda que estas funciones en Dashboard DEBEN tener su propio 'synchronized (scheduler.lock)' adentro del invokeLater)
                 if (gui != null) {
-                    gui.updateStatus(contadorCiclos, scheduler.getCurrentProcess());
-                    gui.updateReadyQueue(scheduler.getReadyQueue());
-                    gui.updateBlockedQueue(scheduler.getBlockedQueue());
-                    gui.updateFinishedQueue(scheduler.getFinishedQueue());
+                    // Importa javax.swing.SwingUtilities; al inicio de tu archivo
+                    javax.swing.SwingUtilities.invokeLater(() -> {
+                        // Todo lo que toca la pantalla DEBE ir aquí adentro
+                        gui.updateStatus(contadorCiclos, scheduler.getCurrentProcess());
+                        gui.updateReadyQueue(scheduler.getReadyQueue());
+                        gui.updateBlockedQueue(scheduler.getBlockedQueue());
+                        gui.updateFinishedQueue(scheduler.getFinishedQueue());
+                    });
                 } else {
                     System.out.println("!!! ERROR: El reloj no tiene conexión con la ventana (gui es null)");
                 }
@@ -86,7 +88,7 @@ public class Clock implements Runnable {
             } catch (Exception e) {
                 System.err.println("¡CRASH EN EL RELOJ! Motivo:");
                 e.printStackTrace();
-                break; 
+                break;
             }
         }
     }

@@ -460,9 +460,8 @@ public class Dashboard extends javax.swing.JFrame {
                             // Si tu simulador requiere reordenar (Priority, SRT, EDF), descomenta esto:
                             // scheduler.Organize();
                             // Actualizamos la tabla leyendo la cola de forma segura
-                            updateReadyQueue(scheduler.getReadyQueue());
-
                         } // 3. ¡ABRIMOS EL CANDADO! El scheduler puede volver a trabajar.
+                        updateReadyQueue(scheduler.getReadyQueue());
 
                         // 4. Pausamos el hilo medio segundo AFUERA del candado
                         Thread.sleep(500);
@@ -522,10 +521,9 @@ public class Dashboard extends javax.swing.JFrame {
                         scheduler.Organize();
 
                         // 3. Actualizamos la tabla de la interfaz
-                        updateReadyQueue(scheduler.getReadyQueue());
-
                     } // ¡SE LIBERA EL CANDADO! 
                     // A partir de aquí, el reloj de simulación puede volver a trabajar.
+                    updateReadyQueue(scheduler.getReadyQueue());
 
                     // OJO: El sleep DEBE ir afuera del candado. 
                     // Si lo pones adentro, congelas toda la simulación por medio segundo.
@@ -707,10 +705,10 @@ public class Dashboard extends javax.swing.JFrame {
     }
 
     // 3. Método para actualizar el CPU (Las etiquetas del medio)
-public void updateStatus(int ciclos, com.mycompany.sisoperativos.logic.PCB procesoActual) {
+    public void updateStatus(int ciclos, com.mycompany.sisoperativos.logic.PCB procesoActual) {
         SwingUtilities.invokeLater(() -> {
             lblReloj.setText("Ciclos: " + ciclos);
-            
+
             // Leemos el proceso actual de forma segura
             synchronized (scheduler.lock) {
                 if (procesoActual != null) {
