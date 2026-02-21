@@ -78,6 +78,11 @@ public class Clock implements Runnable {
                         gui.updateFinishedQueue(scheduler.getFinishedQueue());
                         gui.updateSuspendedReadyQueue(scheduler.getSuspendedReadyQueue());
                         gui.updateSuspendedBlockedQueue(scheduler.getSuspendedBlockedQueue());
+                        double usoActual = scheduler.getCpuUtilization();
+
+                        // Le pedimos al Dashboard que actualice su monitor
+                        // (Asegúrate de haber creado este método en tu Dashboard.java)
+                        gui.getMonitor().updateData(usoActual);
                     });
                 } else {
                     System.out.println("!!! ERROR: El reloj no tiene conexión con la ventana (gui es null)");

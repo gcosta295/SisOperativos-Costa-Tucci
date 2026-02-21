@@ -9,6 +9,7 @@ package com.mycompany.sisoperativos.logic;
  * @author astv06
  */
 public class PCB {
+
     private int id;
     private String user;
     private String state;
@@ -118,7 +119,7 @@ public class PCB {
     public void setDurationHope(int durationHope) {
         this.durationHope = durationHope;
     }
-    
+
     public PCB getNextIO() {
         return nextIO;
     }
@@ -126,22 +127,52 @@ public class PCB {
     public void setNextIO(PCB nextIO) {
         this.nextIO = nextIO;
     }
-         
+
     public PCB() {
         long time = System.nanoTime();
-        this.id= (int) ((time % 10000000)+1);   
-        this.user="Satellite";
-        this.priority=0;
-        this.before=null;
-        this.next=null;
-        this.nextIO=null;
-        this.quantum=0;
-        this.durationHope=0;
-        this.deadlineR=0;
-        this.durationR=0;
-        this.size=0;
-        this.inputOutput=null;
+        this.id = (int) ((time % 10000000) + 1);
+        this.user = "Satellite";
+        this.priority = 0;
+        this.before = null;
+        this.next = null;
+        this.nextIO = null;
+        this.quantum = 0;
+        this.durationHope = 0;
+        this.deadlineR = 0;
+        this.durationR = 0;
+        this.size = 0;
+        this.inputOutput = null;
     }
-    
-    
+
+    public String processName() {
+        int id = this.id;
+        String processName = "";
+        // Asignación limpia de nombres y dispositivos I/O
+        if (id == 13) {
+            processName = "Image Upload";
+        } else if (id == 11) {
+            processName = "Temperature";
+        } else if (id == 7) {
+            processName = "Location";
+        } else if (id == 5) {
+            processName = "Telemetry";
+        } else if (id == 3) {
+            processName = "Beacon Radio";
+        } else if (id == 2) {
+            processName = "System Health";
+        } else if (id % 2 == 0 && id % 3 == 0) {
+            processName = "Update Software";
+        } else if (id % 2 == 0 && id % 3 != 0) {
+            processName = "Message";
+        } else if (id % 2 != 0 && id % 3 == 0) {
+            processName = "Collision avoidance";
+        } else if (id % 2 != 0 && id % 3 != 0 && id % 5 == 0) {
+            processName = "Full Memory";
+        } else if (id % 2 != 0 && id % 3 != 0 && id % 5 != 0 && id % 7 == 0) {
+            processName = "Radiation Sensor";
+        } else if (id % 2 != 0 && id % 3 != 0 && id % 5 != 0 && id % 7 != 0) {
+            processName = "Charging Cut";
+        }
+        return processName;
+    }
 }
