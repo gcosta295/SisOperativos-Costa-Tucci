@@ -156,10 +156,10 @@ public class PCB {
         this.exitTime = 0;
     }
 
+    //en base al ID recupera el nombre del proceso
     public String processName() {
         int id = this.id;
         String processName = "";
-        // Asignación limpia de nombres y dispositivos I/O
         if (id == 13) {
             processName = "Image Upload";
         } else if (id == 11) {
